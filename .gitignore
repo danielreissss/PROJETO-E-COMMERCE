@@ -1,0 +1,18 @@
+# Dependências do Node (Muito grandes e devem ser ignoradas)
+/node_modules
+
+# Logs e Arquivos de Build
+npm-debug.log*
+yarn-debug.log*
+/build
+/dist
+/tmp
+
+# DOCKER e SEGURANÇA (CRUCIAL)
+# Arquivo de credenciais NUNCA deve ser versionado!
+.env
+# Volume de dados do banco de dados persistente
+db_data/
+
+# Arquivos de Ferramentas de BD
+*.session.sql
