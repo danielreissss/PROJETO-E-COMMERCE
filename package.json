@@ -1,0 +1,31 @@
+{
+  "name": "projeto-ecommerce",
+  "version": "1.0.0",
+  "description": "Plataforma de e-commerce desenvolvida para Comp Jr.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielreissss/PROJETO-E-COMMERCE.git"
+  },
+  "keywords": [
+    "ecommerce",
+    "node",
+    "web",
+    "junior",
+    "empresa",
+    "projeto",
+    "API"
+  ],
+  "author": "Daniel Reis",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/danielreissss/PROJETO-E-COMMERCE/issues"
+  },
+  "homepage": "https://github.com/danielreissss/PROJETO-E-COMMERCE#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
