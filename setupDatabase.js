@@ -1,0 +1,77 @@
+// Importa a biblioteca mysql2 para usar a versão com Promises
+const mysql = require('mysql2/promise');
+
+// Importa as configurações do banco de dados do seu arquivo de database
+const dbConfig = require('./backend/database.js').config; // Ajuste o caminho se necessário
+
+// Array com as queries SQL para criar cada tabela
+const queries = [
+    `
+    CREATE TABLE IF NOT EXISTS clientes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        senha VARCHAR(255) NOT NULL,
+        cargo ENUM('padrao', 'administrador') NOT NULL DEFAULT 'padrao',
+        passwordResetToken VARCHAR(255),
+        passwordResetExpires DATETIME
+    );
+    `,
+    `
+    CREATE TABLE IF NOT EXISTS produtos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(255) NOT NULL,
+        descricao TEXT,
+        preco DECIMAL(10, 2) NOT NULL,
+        estoque INT NOT NULL DEFAULT 0
+    );
+    `,
+    `
+    CREATE TABLE IF NOT EXISTS pedidos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        cliente_id INT NOT NULL,
+        data_pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        status VARCHAR(50) NOT NULL DEFAULT 'Pendente',
+        FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+    );
+    `,
+    `
+    CREATE TABLE IF NOT EXISTS pedidos_produtos (
+        pedido_id INT NOT NULL,
+        produto_id INT NOT NULL,
+        quantidade INT NOT NULL,
+        preco_unitario DECIMAL(10, 2) NOT NULL,
+        PRIMARY KEY (pedido_id, produto_id),
+        FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
+        FOREIGN KEY (produto_id) REFERENCES produtos(id)
+    );
+    `
+];
+
+// Função assíncrona para criar as tabelas
+async function createTables() {
+    let connection;
+    try {
+        // Cria a conexão com o banco de dados
+        connection = await mysql.createConnection(dbConfig);
+        console.log('Conexão com o banco de dados bem-sucedida.');
+
+        // Executa cada query do array uma por uma
+        for (const query of queries) {
+            await connection.query(query);
+        }
+
+        console.log('Tabelas criadas ou já existentes com sucesso!');
+    } catch (error) {
+        console.error('Erro ao criar as tabelas:', error);
+    } finally {
+        // Fecha a conexão, independentemente de ter ocorrido erro ou não
+        if (connection) {
+            await connection.end();
+            console.log('Conexão com o banco de dados fechada.');
+        }
+    }
+}
+
+// Executa a função
+createTables();

@@ -2,18 +2,26 @@ const dbConnection = require('../database.js');
 
 const Cliente = {};
 
-// Buscar todos os clientes
+// Buscar todos os clientes (sem expor a senha)
 Cliente.getAll = (callback) => {
-    dbConnection.query('SELECT * FROM cliente', callback);
+    dbConnection.query('SELECT id, nome, email, cargo FROM cliente', callback);
 };
 
-// Buscar um cliente por ID
+// Buscar um cliente por ID (sem expor a senha)
 Cliente.getById = (id, callback) => {
-    dbConnection.query('SELECT * FROM cliente WHERE id = ?', [id], callback);
+    dbConnection.query('SELECT id, nome, email, cargo FROM cliente WHERE id = ?', [id], callback);
+};
+
+// NOVO MÉTODO ESSENCIAL PARA O LOGIN
+// Buscar um cliente pelo Email
+Cliente.findByEmail = (email, callback) => {
+    // Para o login, precisamos de todos os dados, incluindo a senha para comparação
+    dbConnection.query('SELECT * FROM cliente WHERE email = ?', [email], callback);
 };
 
 // Criar um novo cliente
 Cliente.create = (novoCliente, callback) => {
+    // Lembre-se: A senha em 'novoCliente' já deve chegar aqui criptografada (hashed)!
     dbConnection.query('INSERT INTO cliente SET ?', novoCliente, callback);
 };
 
