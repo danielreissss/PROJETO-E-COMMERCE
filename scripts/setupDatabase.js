@@ -1,8 +1,16 @@
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
 // Importa a biblioteca mysql2 para usar a versão com Promises
 const mysql = require('mysql2/promise');
 
-// Importa as configurações do banco de dados do seu arquivo de database
-const dbConfig = require('./backend/database.js').config; // Ajuste o caminho se necessário
+const dbConfig = {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT
+};
 
 // Array com as queries SQL para criar cada tabela
 const queries = [
