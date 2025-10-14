@@ -12,10 +12,11 @@ exports.create = (req, res) => {
 
     // 1. Cria a entrada principal na tabela 'compra'
     Compra.create({ cliente_id: cliente_id }, (err, dataCompra) => {
-        if (err) {
-            res.status(500).send({ message: "Erro ao registrar a compra." });
-            return;
-        }
+       if (err) {
+    // Envia o objeto de erro completo do banco de dados
+    res.status(500).send({ message: "Erro ao registrar a compra.", error: err });
+    return;
+}
 
         const compraId = dataCompra.insertId;
         let itemsProcessed = 0;
