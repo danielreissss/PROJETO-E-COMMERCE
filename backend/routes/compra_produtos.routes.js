@@ -1,17 +1,20 @@
 const express = require('express');
-// A opção { mergeParams: true } é essencial para que esta rota tenha acesso ao ':compraId' da rota pai.
 const router = express.Router({ mergeParams: true });
 const compraProdutosController = require('../controller/compra_produtos.controller.js');
 
-// Rota para adicionar um novo item a uma compra
+// Rota para buscar todos os itens de uma compra (Read)
+// GET /api/compras/:compraId/items
+router.get('/', compraProdutosController.getItemsForCompra);
+
+// Rota para adicionar um novo item a uma compra (Create)
 // POST /api/compras/:compraId/items
 router.post('/', compraProdutosController.addItem);
 
-// Rota para atualizar um item específico (ex: quantidade) em uma compra
+// Rota para atualizar um item específico em uma compra (Update)
 // PUT /api/compras/:compraId/items/:produtoId
 router.put('/:produtoId', compraProdutosController.updateItem);
 
-// Rota para remover um item de uma compra
+// Rota para remover um item de uma compra (Delete)
 // DELETE /api/compras/:compraId/items/:produtoId
 router.delete('/:produtoId', compraProdutosController.removeItem);
 

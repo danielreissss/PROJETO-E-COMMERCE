@@ -36,3 +36,18 @@ exports.removeItem = (req, res) => {
         else res.send({ message: "Item removido com sucesso." });
     });
 };
+// ... (suas funções addItem, updateItem, removeItem existentes) ...
+
+// Busca todos os itens de uma compra específica
+exports.getItemsForCompra = (req, res) => {
+    // O compraId virá da rota pai (ex: /api/compras/:compraId/items)
+    const { compraId } = req.params;
+
+    CompraProdutos.findByCompraId(compraId, (err, data) => {
+        if (err) {
+            res.status(500).send({ message: err.message || "Ocorreu um erro ao buscar os itens da compra." });
+        } else {
+            res.status(200).send(data);
+        }
+    });
+};

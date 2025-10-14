@@ -1,62 +1,46 @@
-const Cliente = require('../model/cliente.model.js');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+// Adicione estas funções ao seu cliente.controller.js
+// (Você já tem as funções 'create' e 'login')
 
-// Cria (registra) um novo cliente com senha criptografada
-exports.create = (req, res) => {
-    if (!req.body.email || !req.body.senha) {
-        res.status(400).send({ message: "Email e senha são obrigatórios!" });
-        return;
-    }
-
-    // Criptografa a senha antes de salvar
-    const salt = bcrypt.genSaltSync(10);
-    const hashedPassword = bcrypt.hashSync(req.body.senha, salt);
-
-    const cliente = {
-        nome: req.body.nome,
-        email: req.body.email,
-        senha: hashedPassword,
-        cargo: req.body.cargo || 'padrao'
-    };
-
-    Cliente.create(cliente, (err, data) => {
-        if (err) res.status(500).send({ message: err.message || "Erro ao criar o cliente." });
-        else res.status(201).send({ id: data.insertId, nome: cliente.nome, email: cliente.email });
+// Busca todos os clientes
+exports.findAll = (req, res) => {
+    Cliente.getAll((err, data) => {
+        if (err) res.status(500).send({ message: err.message || "Erro ao buscar clientes." });
+        else res.send(data);
     });
 };
 
-// Lógica de Login
-exports.login = (req, res) => {
-    if (!req.body.email || !req.body.senha) {
-        res.status(400).send({ message: "Email e senha são obrigatórios!" });
-        return;
-    }
-
-    Cliente.findByEmail(req.body.email, (err, cliente) => {
+// Busca um cliente pelo ID
+exports.findOne = (req, res) => {
+    Cliente.getById(req.params.id, (err, data) => {
         if (err) {
-            res.status(500).send({ message: "Erro interno." });
-            return;
-        }
-        if (!cliente) {
-            res.status(404).send({ message: "Usuário não encontrado." });
-            return;
-        }
-
-        // Compara a senha enviada com a senha criptografada no banco
-        const passwordIsValid = bcrypt.compareSync(req.body.senha, cliente.senha);
-        if (!passwordIsValid) {
-            res.status(401).send({ auth: false, token: null, message: "Senha inválida!" });
-            return;
-        }
-
-        // Gera o token JWT
-        const token = jwt.sign({ id: cliente.id, cargo: cliente.cargo }, process.env.JWT_SECRET, {
-            expiresIn: 86400 // Expira em 24 horas
-        });
-
-        res.status(200).send({ auth: true, token: token });
+            if (err.kind === "not_found") res.status(404).send({ message: `Cliente não encontrado com id ${req.params.id}.` });
+            else res.status(500).send({ message: "Erro ao buscar cliente com id " + req.params.id });
+        } else res.send(data);
     });
 };
 
-// Adicione aqui as funções findAll, findOne, update e delete se necessário
+// Atualiza um cliente pelo ID
+exports.update = (req, res) => {
+    if (!req.body) {
+        res.status(400).send({ message: "O corpo da requisição não pode ser vazio!" });
+    }
+    // IMPORTANTE: Se a senha for atualizada, ela também precisa ser criptografada aqui!
+    // Ex: if (req.body.senha) { req.body.senha = bcrypt.hashSync(...) }
+
+    Cliente.update(req.params.id, req.body, (err, data) => {
+        if (err) {
+            if (err.kind === "not_found") res.status(404).send({ message: `Cliente não encontrado com id ${req.params.id}.` });
+            else res.status(500).send({ message: "Erro ao atualizar cliente com id " + req.params.id });
+        } else res.send({ message: "Cliente atualizado com sucesso." });
+    });
+};
+
+// Deleta um cliente pelo ID
+exports.delete = (req, res) => {
+    Cliente.delete(req.params.id, (err, data) => {
+        if (err) {
+            if (err.kind === "not_found") res.status(404).send({ message: `Cliente não encontrado com id ${req.params.id}.` });
+            else res.status(500).send({ message: "Não foi possível deletar o cliente com id " + req.params.id });
+        } else res.send({ message: `Cliente foi deletado com sucesso!` });
+    });
+};
