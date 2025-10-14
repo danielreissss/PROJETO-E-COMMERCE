@@ -12,10 +12,9 @@ const dbConfig = {
     port: process.env.DB_PORT
 };
 
-// Array com as queries SQL para criar cada tabela
 const queries = [
     `
-    CREATE TABLE IF NOT EXISTS clientes (
+    CREATE TABLE IF NOT EXISTS cliente (
         id INT AUTO_INCREMENT PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL UNIQUE,
@@ -35,22 +34,27 @@ const queries = [
     );
     `,
     `
-    CREATE TABLE IF NOT EXISTS pedidos (
+    CREATE TABLE IF NOT EXISTS compra (
         id INT AUTO_INCREMENT PRIMARY KEY,
         cliente_id INT NOT NULL,
         data_pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         status VARCHAR(50) NOT NULL DEFAULT 'Pendente',
-        FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+        /* CORREÇÃO: Apontando para a tabela 'cliente' (singular) */
+        FOREIGN KEY (cliente_id) REFERENCES cliente(id)
     );
     `,
     `
-    CREATE TABLE IF NOT EXISTS pedidos_produtos (
-        pedido_id INT NOT NULL,
+    CREATE TABLE IF NOT EXISTS compra_produtos (
+        /* CORREÇÃO: Nome da coluna para consistência */
+        compra_id INT NOT NULL,
         produto_id INT NOT NULL,
         quantidade INT NOT NULL,
         preco_unitario DECIMAL(10, 2) NOT NULL,
-        PRIMARY KEY (pedido_id, produto_id),
-        FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
+        /* CORREÇÃO: Nomes corretos na chave primária */
+        PRIMARY KEY (compra_id, produto_id),
+        /* CORREÇÃO: Chave estrangeira apontando para a tabela 'compra' */
+        FOREIGN KEY (compra_id) REFERENCES compra(id),
+        /* CORREÇÃO: Chave estrangeira com o nome correto da coluna */
         FOREIGN KEY (produto_id) REFERENCES produtos(id)
     );
     `

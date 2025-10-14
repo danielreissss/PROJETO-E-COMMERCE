@@ -17,11 +17,12 @@ Produto.getById = (id, callback) => {
 Produto.create = (novoProduto, callback) => {
     dbConnection.query('INSERT INTO produtos SET ?', novoProduto, callback);
 };
+
+
 /* Exemplo de como usar a função create:
 const meuNovoProduto = {
-    marca: "Samsung",
-    modelo: "Galaxy S25",
-    tipo_produto: "Smartphone",
+    nome: "Samsung Galaxy S25",
+    descricao: "O mais novo smartphone com IA integrada.",
     preco: 4999.90,
     estoque: 50
 };
