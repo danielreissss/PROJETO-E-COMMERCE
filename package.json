@@ -1,9 +1,10 @@
 {
   "name": "projeto-ecommerce",
   "version": "1.0.0",
-  "description": "Plataforma de e-commerce desenvolvida para Comp Jr.",
+  "description": "Plataforma de e-commerce desenvolvida para o processo Trainee da Comp Jr.",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -26,6 +27,8 @@
   },
   "homepage": "https://github.com/danielreissss/PROJETO-E-COMMERCE#readme",
   "dependencies": {
-    "express": "^5.1.0"
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "mysql": "^2.18.1"
   }
 }
