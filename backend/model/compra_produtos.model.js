@@ -12,13 +12,14 @@ CompraProdutos.create = (novaEntrada, callback) => {
 // Esta é a função de leitura mais importante para esta tabela.
 // Usamos um JOIN para buscar também o nome do produto, o que é muito mais útil.
 CompraProdutos.findByCompraId = (compraId, callback) => {
+    
     const query = `
         SELECT 
             cp.quantidade, 
             cp.preco_unitario, 
             p.id as produto_id, 
-            p.nome as produto_nome, 
-            p.descricao as produto_descricao 
+            p.marca as produto_nome,
+            p.modelo as produto_descricao
         FROM 
             compra_produtos cp 
         JOIN 
@@ -26,6 +27,7 @@ CompraProdutos.findByCompraId = (compraId, callback) => {
         WHERE 
             cp.compra_id = ?;
     `;
+
     dbConnection.query(query, [compraId], callback);
 };
 
