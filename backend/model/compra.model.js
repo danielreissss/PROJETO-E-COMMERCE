@@ -6,12 +6,13 @@ const Compra = {};
 Compra.getAll = (callback) => {
     const sql = `
         SELECT 
-            c.id, c.data_compra, c.quantidade, c.preco_total,
+            c.id, c.data_compra, c.quantidade, c.valor_unitario,   // CORREÇÃO: Sua coluna se chama 'valor_unitario', não 'preco_total'.
             cl.nome as cliente_nome, 
-            p.nome as produto_nome 
+            p.marca as produto_marca,                               // CORREÇÃO: Sua tabela 'produtos' usa 'marca' e 'modelo', não 'nome'.
+            p.modelo as produto_modelo
         FROM compra c
-        JOIN cliente cl ON c.cliente_id = cl.id
-        JOIN produtos p ON c.produto_id = p.id
+        JOIN cliente cl ON c.id_cliente = cl.id                  // CORREÇÃO: A coluna na sua tabela 'compra' se chama 'id_cliente'.
+        JOIN produtos p ON c.id_produto = p.id                  // CORREÇÃO: A coluna na sua tabela 'compra' se chama 'id_produto'.
     `;
     dbConnection.query(sql, callback);
 };

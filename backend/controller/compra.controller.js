@@ -1,49 +1,44 @@
 const Compra = require('../model/compra.model.js');
-const CompraProdutos = require('../model/compra_produtos.model.js');
+// O modelo CompraProdutos não é mais necessário nesta lógica
+// const CompraProdutos = require('../model/compra_produtos.model.js');
 
 // Cria uma nova compra com seus produtos
 exports.create = (req, res) => {
-    // A requisição deve ter o id do cliente e um array de produtos
     const { cliente_id, produtos } = req.body;
-    if (!cliente_id || !produtos || produtos.length === 0) {
-        res.status(400).send({ message: "Dados da compra incompletos!" });
-        return;
+    if (!cliente_id || !produtos || !produtos.length) {
+        return res.status(400).send({ message: "Dados da compra incompletos!" });
     }
 
-    // 1. Cria a entrada principal na tabela 'compra'
-    Compra.create({ cliente_id: cliente_id }, (err, dataCompra) => {
-       if (err) {
-    // Envia o objeto de erro completo do banco de dados
-    res.status(500).send({ message: "Erro ao registrar a compra.", error: err });
-    return;
-}
+    let itemsProcessed = 0;
+    const totalItems = produtos.length;
+    const responses = [];
 
-        const compraId = dataCompra.insertId;
-        let itemsProcessed = 0;
+    // CORREÇÃO: Itera sobre cada produto e cria um registro para cada um na tabela 'compra'
+    produtos.forEach(produto => {
+        const novaCompra = {
+            cliente_id: cliente_id,
+            produto_id: produto.produto_id,
+            quantidade: produto.quantidade,
+            valor_unitario: produto.preco_unitario
+        };
 
-        // 2. Itera sobre cada produto e o insere na tabela 'compra_produtos'
-        produtos.forEach(produto => {
-            const novaEntrada = {
-                compra_id: compraId,
-                produto_id: produto.produto_id,
-                quantidade: produto.quantidade,
-                preco_unitario: produto.preco_unitario
-            };
+        Compra.create(novaCompra, (err, data) => {
+            itemsProcessed++;
+            if (err) {
+                responses.push({ error: err.message });
+            } else {
+                responses.push({ id: data.insertId });
+            }
 
-            CompraProdutos.create(novaEntrada, (err, data) => {
-                itemsProcessed++;
-                if (err) {
-                    // Idealmente, aqui deveria haver uma lógica para reverter a compra (transaction)
-                    console.error("Erro ao adicionar produto à compra:", err);
-                }
-                // Quando todos os itens forem processados, envia a resposta
-                if (itemsProcessed === produtos.length) {
-                    res.status(201).send({ message: "Compra registrada com sucesso!", compraId: compraId });
-                }
-            });
+            if (itemsProcessed === totalItems) {
+                res.status(201).send({ message: "Processamento da compra finalizado.", results: responses });
+            }
         });
     });
 };
+
+
+// O restante do seu código permanece exatamente o mesmo
 
 // Busca uma compra e todos os seus produtos
 exports.findOne = (req, res) => {
@@ -52,24 +47,11 @@ exports.findOne = (req, res) => {
     Compra.findById(compraId, (err, dataCompra) => {
         if (err) return res.status(500).send(err);
         if (!dataCompra) return res.status(404).send({ message: "Compra não encontrada." });
-
-        // Agora busca os produtos associados a essa compra
-        CompraProdutos.findByCompraId(compraId, (err, dataProdutos) => {
-            if (err) return res.status(500).send(err);
-
-            // Combina os resultados
-            const resultadoFinal = {
-                ...dataCompra,
-                produtos: dataProdutos
-            };
-
-            res.send(resultadoFinal);
-        });
+        
+        // Esta parte agora não é mais necessária pois seu model 'Compra' já pode buscar tudo
+        res.send(dataCompra);
     });
 };
-
-// Adicione estas funções ao seu compra.controller.js
-// (Você já tem as funções 'create' e 'findOne')
 
 // Busca todas as compras (sem os produtos, para uma listagem mais leve)
 exports.findAll = (req, res) => {
@@ -97,19 +79,11 @@ exports.update = (req, res) => {
 exports.delete = (req, res) => {
     const compraId = req.params.id;
 
-    // Passo 1: Deletar todos os itens da tabela 'compra_produtos' associados a esta compra.
-    CompraProdutos.deleteAllByCompraId(compraId, (err, data) => {
+    // Com a nova estrutura, basta deletar a linha da compra
+    Compra.delete(compraId, (err, data) => {
         if (err) {
-            res.status(500).send({ message: "Erro ao deletar os produtos da compra: " + err.message });
-            return;
-        }
-
-        // Passo 2: Agora que os 'filhos' foram deletados, deletar a compra 'mãe'.
-        Compra.delete(compraId, (err, data) => {
-            if (err) {
-                if (err.kind === "not_found") res.status(404).send({ message: `Compra não encontrada com id ${compraId}.` });
-                else res.status(500).send({ message: "Não foi possível deletar a compra com id " + compraId });
-            } else res.send({ message: `Compra e seus produtos foram deletados com sucesso!` });
-        });
+            if (err.kind === "not_found") res.status(404).send({ message: `Compra não encontrada com id ${compraId}.` });
+            else res.status(500).send({ message: "Não foi possível deletar a compra com id " + compraId });
+        } else res.send({ message: `Compra deletada com sucesso!` });
     });
 };
