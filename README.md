@@ -1,6 +1,6 @@
 🚀 PROJETO E-COMMERCE | Desafio Trainee - Comp Jr. (Semanas 1-2)
 Contexto
-Este documento descreve o progresso inicial do Desafio Técnico de Back-End para o Programa de Trainee da Comp Júnior, referente às semanas 1 e 2. O objetivo nesta fase foi estruturar o ambiente de desenvolvimento e modelar a base de dados que servirá de alicerce para a API RESTful.
+Este documento descreve o progresso inicial do Desafio da Trilha Tech de Back-End para o Programa de Trainee da Comp Júnior, referente às semanas 1 e 2. O objetivo nesta fase foi estruturar o ambiente de desenvolvimento e modelar a base de dados que servirá de alicerce para a API RESTful.
 
 Sobre a Fase Inicial do Projeto
 Nesta etapa, o foco foi a criação de um ambiente de desenvolvimento robusto e escalável. Para isso, o projeto foi conteinerizado com Docker, garantindo que a aplicação e seu banco de dados possam ser executados de forma consistente. Paralelamente, foi realizada a modelagem e a criação do banco de dados relacional em MySQL.
