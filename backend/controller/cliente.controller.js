@@ -1,3 +1,6 @@
+// Novas importações necessárias para a recuperação de senha
+const nodemailer = require('nodemailer');
+const crypto = require('crypto'); 
 const Cliente = require('../model/cliente.model.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -18,7 +21,9 @@ exports.create = (req, res) => {
         nome: req.body.nome,
         email: req.body.email,
         senha: hashedPassword, // Salva a senha já criptografada
-        cargo: req.body.cargo || 'padrao'
+        // CORREÇÃO IMPORTANTE: Seu ENUM no banco é 'administrador'
+        // Garanta que o cargo 'admin' seja salvo como 'administrador'
+        cargo: req.body.cargo === 'admin' ? 'administrador' : 'padrao' 
     };
 
     Cliente.create(cliente, (err, data) => {
@@ -98,5 +103,89 @@ exports.delete = (req, res) => {
             if (err.kind === "not_found") res.status(404).send({ message: `Cliente não encontrado com id ${req.params.id}.` });
             else res.status(500).send({ message: "Não foi possível deletar o cliente com id " + req.params.id });
         } else res.send({ message: `Cliente foi deletado com sucesso!` });
+    });
+};
+
+// --- NOVO CÓDIGO (SEMANA 3) ---
+
+// 1. Solicitar recuperação de senha
+exports.forgotPassword = (req, res) => {
+    if (!req.body.email) {
+        return res.status(400).send({ message: "Email é obrigatório!" });
+    }
+
+    Cliente.findByEmail(req.body.email, (err, cliente) => {
+        if (err || !cliente) {
+            return res.status(200).send({ message: "Se o e-mail existir, um link será enviado." });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        const resetExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+
+        Cliente.update(cliente.id, {
+            passwordResetToken: hashedToken,
+            passwordResetExpires: resetExpires
+        }, async (updateErr, data) => {
+            if (updateErr) {
+                return res.status(500).send({ message: "Erro ao salvar o token de reset." });
+            }
+
+            const resetLink = `http://localhost:3000/api/clientes/reset-password?token=${resetToken}`;
+
+            try {
+                let transporter = nodemailer.createTransport({
+                    host: process.env.EMAIL_HOST,
+                    port: process.env.EMAIL_PORT,
+                    secure: (process.env.EMAIL_SECURE === 'true'),
+                    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+                });
+
+                await transporter.sendMail({
+                    from: `"PROJETO E-COMMERCE" <${process.env.EMAIL_USER}>`,
+                    to: cliente.email,
+                    subject: "Recuperação de Senha",
+                    html: `<p>Link para resetar sua senha (válido por 15 min):</p>
+                           <a href="${resetLink}">${resetLink}</a>`,
+                });
+                
+                res.send({ message: "Email de recuperação enviado!" });
+            } catch (error) {
+                res.status(500).send({ message: "Erro ao enviar email." });
+            }
+        });
+    });
+};
+
+// 2. Resetar a senha
+exports.resetPassword = (req, res) => {
+    const { token } = req.query; // Pega o token da URL
+    const { novaSenha } = req.body;
+
+    if (!token || !novaSenha) {
+        return res.status(400).send({ message: "Token e nova senha são obrigatórios." });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    // ATENÇÃO: Você precisará criar esta função 'findByValidToken' no seu 'cliente.model.js'
+    Cliente.findByValidToken(hashedToken, (err, cliente) => {
+        if (err || !cliente) {
+            return res.status(400).send({ message: "Token inválido ou expirado." });
+        }
+
+        const salt = bcrypt.genSaltSync(10);
+        const hashedPassword = bcrypt.hashSync(novaSenha, salt);
+
+        Cliente.update(cliente.id, {
+            senha: hashedPassword,
+            passwordResetToken: null,
+            passwordResetExpires: null
+        }, (updateErr, data) => {
+            if (updateErr) {
+                return res.status(500).send({ message: "Erro ao atualizar senha." });
+            }
+            res.send({ message: "Senha atualizada com sucesso." });
+        });
     });
 };

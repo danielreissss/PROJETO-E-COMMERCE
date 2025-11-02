@@ -35,4 +35,26 @@ Cliente.delete = (id, callback) => {
     dbConnection.query('DELETE FROM cliente WHERE id = ?', [id], callback);
 };
 
+Cliente.findByValidToken = (token, result) => {
+  sql.query(
+    "SELECT * FROM cliente WHERE passwordResetToken = ? AND passwordResetExpires > NOW()",
+    [token],
+    (err, res) => {
+      if (err) {
+        console.log("erro: ", err);
+        result(err, null);
+        return;
+      }
+
+      if (res.length) {
+        result(null, res[0]);
+        return;
+      }
+
+      // Token não encontrado ou já expirou
+      result({ kind: "not_found" }, null);
+    }
+  );
+};
+
 module.exports = Cliente;
