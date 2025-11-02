@@ -17,13 +17,14 @@ exports.create = (req, res) => {
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(req.body.senha, salt);
 
+    // CORREÇÃO: Verificando por 'administrador' (como vem do seu JSON)
+    const cargo = (req.body.cargo === 'administrador') ? 'administrador' : 'padrao';
+
     const cliente = {
         nome: req.body.nome,
         email: req.body.email,
         senha: hashedPassword, // Salva a senha já criptografada
-        // CORREÇÃO IMPORTANTE: Seu ENUM no banco é 'administrador'
-        // Garanta que o cargo 'admin' seja salvo como 'administrador'
-        cargo: req.body.cargo === 'admin' ? 'administrador' : 'padrao' 
+        cargo: cargo 
     };
 
     Cliente.create(cliente, (err, data) => {
