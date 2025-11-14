@@ -11,6 +11,8 @@ let produtoIdCriado;
 // 1. Bloco principal que agrupa os testes de "Produtos"
 describe('Testes das Rotas de Produtos (/api/produtos)', () => {
 
+    // CORREÇÃO: Bloco 'afterAll' REMOVIDO
+    // A conexão agora é fechada de forma centralizada pelo 'compra.test.js'
 
     // --- TESTES 'READ' ---
 
@@ -19,7 +21,7 @@ describe('Testes das Rotas de Produtos (/api/produtos)', () => {
 
         expect(response.statusCode).toBe(200);
         expect(response.body).toBeInstanceOf(Array); 
-        expect(response.body.length).toBe(60); //
+        expect(response.body.length).toBe(60); 
     });
 
     it('Deve buscar um produto específico pelo ID (GET /api/produtos/1)', async () => {
@@ -27,14 +29,14 @@ describe('Testes das Rotas de Produtos (/api/produtos)', () => {
 
         expect(response.statusCode).toBe(200); 
         expect(response.body).toHaveProperty('id', 1); 
-        expect(response.body.marca).toBe('Logitech'); //
+        expect(response.body.marca).toBe('Logitech'); 
     });
 
     it('Deve retornar 404 para um produto inexistente (GET /api/produtos/9999)', async () => {
         const response = await request(app).get('/api/produtos/9999'); 
 
         expect(response.statusCode).toBe(404);
-        expect(response.body.message).toContain('Produto não encontrado com id 9999'); //
+        expect(response.body.message).toContain('Produto não encontrado com id 9999'); 
     });
 
     // --- TESTE 'CREATE' (Novo) ---
@@ -84,7 +86,7 @@ describe('Testes das Rotas de Produtos (/api/produtos)', () => {
             .delete(`/api/produtos/${produtoIdCriado}`); // Usa o ID salvo
 
         expect(response.statusCode).toBe(200);
-        expect(response.body.message).toContain('Produto foi deletado com sucesso!'); //
+        expect(response.body.message).toContain('Produto foi deletado com sucesso!'); 
     });
 
     it('Deve retornar 404 ao tentar buscar o produto deletado', async () => {
@@ -92,7 +94,7 @@ describe('Testes das Rotas de Produtos (/api/produtos)', () => {
             .get(`/api/produtos/${produtoIdCriado}`); // Tenta buscar o ID que acabamos de deletar
 
         expect(response.statusCode).toBe(404);
-        expect(response.body.message).toContain('Produto não encontrado'); //
+        expect(response.body.message).toContain('Produto não encontrado'); 
     });
 
 });

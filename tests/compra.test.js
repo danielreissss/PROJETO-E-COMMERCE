@@ -9,7 +9,7 @@ let testCompraId;
 describe('Testes das Rotas de Compra (/api/compras)', () => {
 
     // --- SETUP (beforeAll) ---
-    // CORREÇÃO: Convertido para async/await
+    // CORREÇÃO: Convertido para async/await para garantir que termine antes dos testes
     beforeAll(async () => {
         const novoCliente = {
             nome: "Cliente de Compras",
@@ -26,13 +26,11 @@ describe('Testes das Rotas de Compra (/api/compras)', () => {
     });
     
     // --- TEARDOWN (afterAll) ---
-    // CORREÇÃO: Convertido para async/await para
-    // garantir que o 'Jest did not exit' seja resolvido.
+    // CORREÇÃO: Convertido para async/await e usando .promise()
     afterAll(async () => {
         const query = 'DELETE FROM cliente WHERE email IN (?, ?, ?)';
         
         // Deleta os 3 clientes de teste
-        // Usamos .promise() para poder usar await no banco
         await db.promise().query(query, ['compras@email.com', 'teste@email.com', 'admin@email.com']);
         
         await db.promise().end(); // Fecha a conexão principal
@@ -40,8 +38,6 @@ describe('Testes das Rotas de Compra (/api/compras)', () => {
 
     // --- TESTE 'CREATE' ---
     it('Deve criar uma nova compra (POST /api/compras)', async () => {
-        // Este teste agora só roda DEPOIS que 'beforeAll' terminou
-        // e 'testClienteId' está definido.
         const novaCompra = {
             cliente_id: testClienteId,
             produtos: [

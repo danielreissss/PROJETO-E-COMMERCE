@@ -1,4 +1,3 @@
-
 const mysql = require('mysql2');
 
 const pool = mysql.createPool({
@@ -12,15 +11,13 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
-// Teste de conexão (Opcional, mas bom ter)
 pool.getConnection((err, connection) => {
     if (err) {
         console.error('Error connecting to MySQL Pool:', err);
         return;
     }
     console.log('Connected to MySQL Pool!');
-    connection.release(); // Libera a conexão de teste
+    connection.release(); 
 });
 
-
-module.exports = pool; // Exporta o pool
+module.exports = pool;
