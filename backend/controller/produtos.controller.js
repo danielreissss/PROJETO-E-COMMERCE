@@ -2,16 +2,19 @@ const Produto = require('../model/produto.model.js');
 
 // Cria e salva um novo produto
 exports.create = (req, res) => {
-    if (!req.body.nome || req.body.preco == null) {
-        res.status(400).send({ message: "O produto deve ter nome e preço!" });
+    // CORREÇÃO: Validando os campos corretos do seu banco de dados
+    if (!req.body.marca || !req.body.modelo || !req.body.tipo_produto) {
+        res.status(400).send({ message: "O produto deve ter marca, modelo e tipo!" });
         return;
     }
 
+    // CORREÇÃO: Mapeando os campos corretos do body para o objeto
     const produto = {
-        nome: req.body.nome,
-        descricao: req.body.descricao,
-        preco: req.body.preco,
-        estoque: req.body.estoque
+        marca: req.body.marca,
+        modelo: req.body.modelo,
+        tipo_produto: req.body.tipo_produto,
+        preco: req.body.preco,       //
+        estoque: req.body.estoque    //
     };
 
     Produto.create(produto, (err, data) => {
@@ -20,7 +23,7 @@ exports.create = (req, res) => {
     });
 };
 
-// Busca todos os produtos
+// Busca todos os produtos (Esta função já estava correta)
 exports.findAll = (req, res) => {
     Produto.getAll((err, data) => {
         if (err) res.status(500).send({ message: err.message || "Erro ao buscar produtos." });
@@ -28,7 +31,7 @@ exports.findAll = (req, res) => {
     });
 };
 
-// Busca um produto pelo ID
+// Busca um produto pelo ID 
 exports.findOne = (req, res) => {
     Produto.getById(req.params.id, (err, data) => {
         if (err) {
@@ -38,7 +41,8 @@ exports.findOne = (req, res) => {
     });
 };
 
-// Atualiza um produto pelo ID
+// Atualiza um produto pelo ID 
+// Ela funciona pois passa o 'req.body' (com os campos corretos) direto para o model.
 exports.update = (req, res) => {
     if (!req.body) {
         res.status(400).send({ message: "O corpo da requisição não pode ser vazio!" });
@@ -52,7 +56,7 @@ exports.update = (req, res) => {
     });
 };
 
-// Deleta um produto pelo ID
+// Deleta um produto pelo ID 
 exports.delete = (req, res) => {
     Produto.delete(req.params.id, (err, data) => {
         if (err) {

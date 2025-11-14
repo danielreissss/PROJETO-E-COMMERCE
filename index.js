@@ -17,6 +17,12 @@ app.use('/api/compras', compraRoutes);
 app.use('/api/compra_produtos', compra_produtosRoutes);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+
+// CORREÇÃO: Impede que o servidor inicie durante os testes
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app; // CORREÇÃO: Exporta o app para o SuperTest
