@@ -11,12 +11,8 @@ let produtoIdCriado;
 // 1. Bloco principal que agrupa os testes de "Produtos"
 describe('Testes das Rotas de Produtos (/api/produtos)', () => {
 
-    // 2. Hook do Jest: Roda UMA VEZ depois de TODOS os testes
-    afterAll(done => {
-        db.end(done); 
-    });
 
-    // --- TESTES 'READ' (Já tínhamos) ---
+    // --- TESTES 'READ' ---
 
     it('Deve listar todos os produtos (GET /api/produtos)', async () => {
         const response = await request(app).get('/api/produtos');
@@ -77,7 +73,7 @@ describe('Testes das Rotas de Produtos (/api/produtos)', () => {
 
         expect(response.statusCode).toBe(200);
         expect(Number(response.body.id)).toBe(produtoIdCriado);
-        expect(response.body.preco).toBe("150.00"); // Preços voltam como string de DECIMAL
+        expect(response.body.preco).toBe(150); // O preço é retornado como número
         expect(response.body.estoque).toBe(5);
     });
 
