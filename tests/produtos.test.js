@@ -1,83 +1,110 @@
-require("dotenv").config(); // ADICIONADO: Apenas por segurança
-const request = require('supertest'); 
-const { app } = require('../index.js');
-// const db = require('../backend/database.js'); // REMOVIDO: Não é usado aqui
+// Carrega variáveis de ambiente do .env (por segurança em ambiente de teste)
+require('dotenv').config();
 
+const request = require('supertest');
+// Importa o app Express (sem iniciar servidor) para uso pelo supertest
+const { app } = require('../index.js');
+// const db = require('../backend/database.js'); // Mantido comentado pois não é utilizado aqui
+
+// Armazena o id do produto criado durante os testes
 let produtoIdCriado;
 
+// ------------------------------------------------------------------
+// Testes de integração das rotas de Produtos (/api/produtos)
+// ------------------------------------------------------------------
 describe('Testes das Rotas de Produtos (/api/produtos)', () => {
+  it('Deve listar todos os produtos (GET /api/produtos)', async () => {
+    const response = await request(app).get('/api/produtos');
 
-    it('Deve listar todos os produtos (GET /api/produtos)', async () => {
-        const response = await request(app).get('/api/produtos');
+    // Espera que a rota retorne um array de produtos
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toBeInstanceOf(Array);
 
-        expect(response.statusCode).toBe(200);
-        expect(response.body).toBeInstanceOf(Array); 
-        expect(response.body.length).toBe(60); 
-    });
+    // Aqui é validado que a base inicial tem 60 produtos cadastrados
+    expect(response.body.length).toBe(60);
+  });
 
-    it('Deve buscar um produto específico pelo ID (GET /api/produtos/1)', async () => {
-        const response = await request(app).get('/api/produtos/1'); 
+  it('Deve buscar um produto específico pelo ID (GET /api/produtos/1)', async () => {
+    const response = await request(app).get('/api/produtos/1');
 
-        expect(response.statusCode).toBe(200); 
-        expect(response.body).toHaveProperty('id', 1); 
-        expect(response.body.marca).toBe('Logitech'); 
-    });
+    // Verifica se o produto retornado tem id = 1
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toHaveProperty('id', 1);
 
-    it('Deve retornar 404 para um produto inexistente (GET /api/produtos/9999)', async () => {
-        const response = await request(app).get('/api/produtos/9999'); 
+    // Garante que o campo "marca" está correto para o produto de id 1
+    expect(response.body.marca).toBe('Logitech');
+  });
 
-        expect(response.statusCode).toBe(404);
-        expect(response.body.message).toContain('Produto não encontrado'); 
-    });
+  it('Deve retornar 404 para um produto inexistente (GET /api/produtos/9999)', async () => {
+    const response = await request(app).get('/api/produtos/9999');
 
-    it('Deve criar um novo produto (POST /api/produtos)', async () => {
-        const novoProduto = {
-            marca: "Teste",
-            modelo: "Produto Teste 1",
-            tipo_produto: "Teste",
-            preco: 100.00,
-            estoque: 10
-        };
+    // Espera que a API sinalize que o produto não foi encontrado
+    expect(response.statusCode).toBe(404);
+    expect(response.body.message).toContain('Produto não encontrado');
+  });
 
-        const response = await request(app)
-            .post('/api/produtos')
-            .send(novoProduto); 
+  it('Deve criar um novo produto (POST /api/produtos)', async () => {
+    // Dados do produto que será criado apenas para fins de teste
+    const novoProduto = {
+      marca: 'Teste',
+      modelo: 'Produto Teste 1',
+      tipo_produto: 'Teste',
+      preco: 100.0,
+      estoque: 10,
+    };
 
-        expect(response.statusCode).toBe(201); 
-        expect(response.body).toHaveProperty('insertId'); 
-        
-        produtoIdCriado = response.body.insertId; 
-    });
+    const response = await request(app)
+      .post('/api/produtos')
+      .send(novoProduto);
 
-    it('Deve atualizar o produto recém-criado (PUT /api/produtos/:id)', async () => {
-        const dadosAtualizados = {
-            preco: 150.00,
-            estoque: 5
-        };
+    // Verifica se a criação foi bem-sucedida e se retornou o insertId
+    expect(response.statusCode).toBe(201);
+    expect(response.body).toHaveProperty('insertId');
 
-        const response = await request(app)
-            .put(`/api/produtos/${produtoIdCriado}`) 
-            .send(dadosAtualizados); 
+    // Guarda o id do produto criado para usar nos próximos testes
+    produtoIdCriado = response.body.insertId;
+  });
 
-        expect(response.statusCode).toBe(200);
-        expect(Number(response.body.id)).toBe(produtoIdCriado);
-        expect(response.body.preco).toBe(150); 
-        expect(response.body.estoque).toBe(5);
-    });
+  it('Deve atualizar o produto recém-criado (PUT /api/produtos/:id)', async () => {
+    // Dados parciais que serão atualizados no produto criado anteriormente
+    const dadosAtualizados = {
+      preco: 150.0,
+      estoque: 5,
+    };
 
-    it('Deve deletar o produto recém-criado (DELETE /api/produtos/:id)', async () => {
-        const response = await request(app)
-            .delete(`/api/produtos/${produtoIdCriado}`); 
+    const response = await request(app)
+      .put(`/api/produtos/${produtoIdCriado}`)
+      .send(dadosAtualizados);
 
-        expect(response.statusCode).toBe(200);
-        expect(response.body.message).toContain('Produto foi deletado com sucesso!'); 
-    });
+    // Verifica se a atualização foi aplicada no produto correto
+    expect(response.statusCode).toBe(200);
+    expect(Number(response.body.id)).toBe(produtoIdCriado);
 
-    it('Deve retornar 404 ao tentar buscar o produto deletado', async () => {
-        const response = await request(app)
-            .get(`/api/produtos/${produtoIdCriado}`); 
+    // Confirma que os campos foram atualizados conforme enviado
+    expect(response.body.preco).toBe(150);
+    expect(response.body.estoque).toBe(5);
+  });
 
-        expect(response.statusCode).toBe(404);
-        expect(response.body.message).toContain('Produto não encontrado'); 
-    });
+  it('Deve deletar o produto recém-criado (DELETE /api/produtos/:id)', async () => {
+    const response = await request(app).delete(
+      `/api/produtos/${produtoIdCriado}`,
+    );
+
+    // Espera remoção bem-sucedida do produto criado no teste
+    expect(response.statusCode).toBe(200);
+    expect(response.body.message).toContain(
+      'Produto foi deletado com sucesso!',
+    );
+  });
+
+  it('Deve retornar 404 ao tentar buscar o produto deletado', async () => {
+    // Tenta buscar novamente o produto que acabou de ser deletado
+    const response = await request(app).get(
+      `/api/produtos/${produtoIdCriado}`,
+    );
+
+    // Espera que a API informe que o produto não existe mais
+    expect(response.statusCode).toBe(404);
+    expect(response.body.message).toContain('Produto não encontrado');
+  });
 });

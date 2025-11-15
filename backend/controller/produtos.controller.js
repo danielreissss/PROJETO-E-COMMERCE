@@ -1,10 +1,18 @@
 // backend/controller/produtos.controller.js
+
+// Controller responsável pelas operações de CRUD de produtos
+
 const Produto = require('../model/produto.model');
 
+// ---------------------------------------------------------------------
+// Cria um novo produto
+// POST /produtos
+// ---------------------------------------------------------------------
 exports.create = async (req, res) => {
   try {
     const { marca, modelo, tipo_produto, preco, estoque } = req.body || {};
 
+    // Validação básica dos campos obrigatórios
     if (!marca || !modelo || !tipo_produto) {
       return res
         .status(400)
@@ -21,7 +29,7 @@ exports.create = async (req, res) => {
 
     const data = await Produto.create(produto);
 
-    // testes esperam insertId
+    // Os testes esperam a propriedade insertId no retorno
     return res.status(201).json({ insertId: data.id, ...produto });
   } catch (err) {
     console.error('ERRO CREATE PRODUTO', err);
@@ -31,6 +39,10 @@ exports.create = async (req, res) => {
   }
 };
 
+// ---------------------------------------------------------------------
+// Lista todos os produtos
+// GET /produtos
+// ---------------------------------------------------------------------
 exports.findAll = async (_req, res) => {
   try {
     const data = await Produto.getAll();
@@ -42,6 +54,10 @@ exports.findAll = async (_req, res) => {
   }
 };
 
+// ---------------------------------------------------------------------
+// Busca um produto específico pelo ID
+// GET /produtos/:id
+// ---------------------------------------------------------------------
 exports.findOne = async (req, res) => {
   try {
     const data = await Produto.getById(req.params.id);
@@ -58,9 +74,13 @@ exports.findOne = async (req, res) => {
   }
 };
 
+// ---------------------------------------------------------------------
+// Atualiza um produto
+// PUT /produtos/:id
+// ---------------------------------------------------------------------
 exports.update = async (req, res) => {
   try {
-    if (!req.body) {
+    if (!req.body || Object.keys(req.body).length === 0) {
       return res.status(400).json({
         message: 'O corpo da requisição não pode ser vazio!',
       });
@@ -80,6 +100,10 @@ exports.update = async (req, res) => {
   }
 };
 
+// ---------------------------------------------------------------------
+// Deleta um produto
+// DELETE /produtos/:id
+// ---------------------------------------------------------------------
 exports.delete = async (req, res) => {
   try {
     await Produto.delete(req.params.id);

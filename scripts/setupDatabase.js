@@ -1,22 +1,29 @@
 // scripts/setupDatabase.js
+
 const path = require('path');
+
+// Carrega o .env localizado na raiz do projeto (um nível acima deste script)
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const mysql = require('mysql2/promise');
 
-// Criar POOL em vez de uma conexão única
+// Cria um pool de conexões com MySQL em vez de uma conexão única,
+// permitindo melhor gerenciamento e reutilização de conexões.
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
+  host: process.env.DB_HOST,    // Host do banco (ex.: localhost ou nome do serviço no Docker)
+  user: process.env.DB_USER,    // Usuário do banco definido no .env
+  password: process.env.DB_PASS, // Senha do banco definida no .env
+  database: process.env.DB_NAME, // Nome do schema do banco
+  port: process.env.DB_PORT,     // Porta do MySQL (ex.: 3306)
+  waitForConnections: true,      // Fila requisições quando não houver conexão imediata
+  connectionLimit: 10,           // Máximo de conexões simultâneas no pool
+  queueLimit: 0,                 // 0 = sem limite de fila
 });
 
-// 1. Queries de CRIAÇÃO DE TABELAS
+// ---------------------------------------------------------
+// 1. Queries de criação de tabelas (DDL)
+// ---------------------------------------------------------
+// Cada string do array representa a criação de uma tabela necessária ao sistema.
 const tableQueries = [
   `
   CREATE TABLE IF NOT EXISTS cliente (
@@ -61,29 +68,41 @@ const tableQueries = [
   `,
 ];
 
-// 2. Inserção dos produtos
-// COLE AQUI a sua query completa de insert, sem "..."
+// ---------------------------------------------------------
+// 2. Query de inserção inicial de produtos (seed)
+// ---------------------------------------------------------
+// Substituir o comentário pela query completa de INSERT usada para popular a tabela.
 const dataInsertQuery = `
   -- sua query completa de INSERT em produtos
 `;
 
+// ---------------------------------------------------------
+// Função principal responsável por:
+// - abrir conexão do pool
+// - criar tabelas
+// - inserir dados iniciais (seed) em produtos, se necessário
+// - encerrar conexões
+// ---------------------------------------------------------
 async function createTables() {
   let connection;
+
   try {
+    // Obtém uma conexão do pool
     connection = await pool.getConnection();
     console.log('Conexão com o banco de dados via POOL bem-sucedida.');
 
-    // Criar tabelas
+    // Executa cada comando de criação de tabela em sequência
     for (const query of tableQueries) {
       await connection.query(query);
     }
     console.log('Tabelas criadas com sucesso!');
 
-    // Verificar se a tabela produtos está vazia
+    // Verifica se a tabela produtos já possui registros
     const [rows] = await connection.query(
-      'SELECT COUNT(*) AS count FROM produtos'
+      'SELECT COUNT(*) AS count FROM produtos',
     );
 
+    // Se ainda não houver registros, insere os dados iniciais (seed)
     if (rows[0].count === 0) {
       console.log('Tabela "produtos" vazia. Inserindo dados...');
       await connection.query(dataInsertQuery);
@@ -92,17 +111,21 @@ async function createTables() {
       console.log('Tabela "produtos" já possui dados.');
     }
   } catch (error) {
+    // Loga qualquer erro que ocorra durante a configuração do banco
     console.error('Erro ao configurar o banco de dados:', error);
-    process.exitCode = 1; // indica erro
+    // Define código de saída diferente de 0 para indicar erro em scripts npm
+    process.exitCode = 1;
   } finally {
+    // Garante devolução da conexão ao pool, se tiver sido aberta
     if (connection) {
       connection.release();
       console.log('Conexão devolvida ao pool.');
     }
-    // Fecha o pool e encerra o processo
+    // Encerra o pool de conexões e finaliza o processo do script
     await pool.end();
-    process.exit(); // garante que o comando npm termine
+    process.exit(); // Garante que o comando npm termine após a execução do script
   }
 }
 
+// Executa a função de criação/configuração das tabelas
 createTables();
