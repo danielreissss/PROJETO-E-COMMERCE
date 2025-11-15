@@ -3,7 +3,7 @@
 require('dotenv').config();
 
 const request = require('supertest');
-const app = require('../index.js');
+const { app } = require('../index.js');
 const db = require('../backend/database.js');
 
 let testClienteId;

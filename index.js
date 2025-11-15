@@ -4,6 +4,7 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 
+// Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -24,9 +25,14 @@ app.get('/', (_req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-// Não sobe o servidor em ambiente de teste (para Jest)
+let server = null;
+
+// Só sobe o servidor se NÃO estiver em ambiente de teste
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  server = app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 }
 
-module.exports = app;
+// Exporta app (para o supertest) e server (caso queira fechar manualmente)
+module.exports = { app, server };

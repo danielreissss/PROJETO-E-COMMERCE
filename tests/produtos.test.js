@@ -1,6 +1,6 @@
 require("dotenv").config(); // ADICIONADO: Apenas por segurança
 const request = require('supertest'); 
-const app = require('../index.js'); 
+const { app } = require('../index.js');
 // const db = require('../backend/database.js'); // REMOVIDO: Não é usado aqui
 
 let produtoIdCriado;
