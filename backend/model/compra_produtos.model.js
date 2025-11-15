@@ -4,14 +4,13 @@ const dbConnection = require('../database.js');
 const CompraProdutos = {};
 
 // Adiciona um produto a uma compra
-CompraProdutos.create = (novaEntrada, callback) => {
-    dbConnection.query('INSERT INTO compra_produtos SET ?', novaEntrada, callback);
+CompraProdutos.create = async (novaEntrada) => {
+    const [result] = await dbConnection.query('INSERT INTO compra_produtos SET ?', novaEntrada);
+    return { insertId: result.insertId, ...novaEntrada };
 };
 
 // Busca todos os produtos de uma compra específica
-CompraProdutos.findByCompraId = (compraId, callback) => {
-    
-    // CORREÇÃO: Voltamos a usar 'marca' e 'modelo' para bater com sua imagem
+CompraProdutos.findByCompraId = async (compraId) => {
     const query = `
         SELECT 
             cp.quantidade, 
@@ -26,35 +25,35 @@ CompraProdutos.findByCompraId = (compraId, callback) => {
         WHERE 
             cp.compra_id = ?;
     `;
-
-    dbConnection.query(query, [compraId], callback);
+    const [rows] = await dbConnection.query(query, [compraId]);
+    return rows;
 };
 
 // Atualiza a quantidade de um produto em uma compra
-CompraProdutos.update = (compraId, produtoId, dados, callback) => {
-    dbConnection.query(
+CompraProdutos.update = async (compraId, produtoId, dados) => {
+    const [result] = await dbConnection.query(
         'UPDATE compra_produtos SET ? WHERE compra_id = ? AND produto_id = ?',
-        [dados, compraId, produtoId],
-        callback
+        [dados, compraId, produtoId]
     );
+    return result;
 };
 
 // Remove um produto de uma compra
-CompraProdutos.delete = (compraId, produtoId, callback) => {
-    dbConnection.query(
+CompraProdutos.delete = async (compraId, produtoId) => {
+    const [result] = await dbConnection.query(
         'DELETE FROM compra_produtos WHERE compra_id = ? AND produto_id = ?',
-        [compraId, produtoId],
-        callback
+        [compraId, produtoId]
     );
+    return result;
 };
 
 // Deleta TODOS os produtos associados a um ID de compra
-CompraProdutos.deleteByCompraId = (compraId, callback) => {
-    dbConnection.query(
+CompraProdutos.deleteByCompraId = async (compraId) => {
+    const [result] = await dbConnection.query(
         'DELETE FROM compra_produtos WHERE compra_id = ?',
-        [compraId],
-        callback
+        [compraId]
     );
+    return result;
 };
 
 module.exports = CompraProdutos;

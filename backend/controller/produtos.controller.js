@@ -1,67 +1,100 @@
-const Produto = require('../model/produto.model.js');
+// backend/controller/produtos.controller.js
+const Produto = require('../model/produto.model');
 
-// Cria e salva um novo produto
-exports.create = (req, res) => {
-    // CORREÇÃO: Validando os campos corretos do seu banco de dados
-    if (!req.body.marca || !req.body.modelo || !req.body.tipo_produto) {
-        res.status(400).send({ message: "O produto deve ter marca, modelo e tipo!" });
-        return;
+exports.create = async (req, res) => {
+  try {
+    const { marca, modelo, tipo_produto, preco, estoque } = req.body || {};
+
+    if (!marca || !modelo || !tipo_produto) {
+      return res
+        .status(400)
+        .json({ message: 'O produto deve ter marca, modelo e tipo!' });
     }
 
-    // CORREÇÃO: Mapeando os campos corretos do body para o objeto
     const produto = {
-        marca: req.body.marca,
-        modelo: req.body.modelo,
-        tipo_produto: req.body.tipo_produto,
-        preco: req.body.preco,       //
-        estoque: req.body.estoque    //
+      marca,
+      modelo,
+      tipo_produto,
+      preco,
+      estoque,
     };
 
-    Produto.create(produto, (err, data) => {
-        if (err) res.status(500).send({ message: err.message || "Erro ao criar o produto." });
-        else res.status(201).send(data);
+    const data = await Produto.create(produto);
+
+    // testes esperam insertId
+    return res.status(201).json({ insertId: data.id, ...produto });
+  } catch (err) {
+    console.error('ERRO CREATE PRODUTO', err);
+    return res.status(500).json({
+      message: err?.message || 'Erro ao criar o produto.',
     });
+  }
 };
 
-// Busca todos os produtos (Esta função já estava correta)
-exports.findAll = (req, res) => {
-    Produto.getAll((err, data) => {
-        if (err) res.status(500).send({ message: err.message || "Erro ao buscar produtos." });
-        else res.send(data);
+exports.findAll = async (_req, res) => {
+  try {
+    const data = await Produto.getAll();
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(500).json({
+      message: err?.message || 'Erro ao buscar produtos.',
     });
+  }
 };
 
-// Busca um produto pelo ID 
-exports.findOne = (req, res) => {
-    Produto.getById(req.params.id, (err, data) => {
-        if (err) {
-            if (err.kind === "not_found") res.status(404).send({ message: `Produto não encontrado com id ${req.params.id}.` });
-            else res.status(500).send({ message: "Erro ao buscar produto com id " + req.params.id });
-        } else res.send(data);
+exports.findOne = async (req, res) => {
+  try {
+    const data = await Produto.getById(req.params.id);
+    return res.status(200).json(data);
+  } catch (err) {
+    if (err?.kind === 'not_found') {
+      return res.status(404).json({
+        message: `Produto não encontrado com id ${req.params.id}.`,
+      });
+    }
+    return res.status(500).json({
+      message: 'Erro ao buscar produto com id ' + req.params.id,
     });
+  }
 };
 
-// Atualiza um produto pelo ID 
-// Ela funciona pois passa o 'req.body' (com os campos corretos) direto para o model.
-exports.update = (req, res) => {
+exports.update = async (req, res) => {
+  try {
     if (!req.body) {
-        res.status(400).send({ message: "O corpo da requisição não pode ser vazio!" });
+      return res.status(400).json({
+        message: 'O corpo da requisição não pode ser vazio!',
+      });
     }
 
-    Produto.update(req.params.id, req.body, (err, data) => {
-        if (err) {
-            if (err.kind === "not_found") res.status(404).send({ message: `Produto não encontrado com id ${req.params.id}.` });
-            else res.status(500).send({ message: "Erro ao atualizar produto com id " + req.params.id });
-        } else res.send(data);
+    const data = await Produto.update(req.params.id, req.body);
+    return res.status(200).json(data);
+  } catch (err) {
+    if (err?.kind === 'not_found') {
+      return res.status(404).json({
+        message: `Produto não encontrado com id ${req.params.id}.`,
+      });
+    }
+    return res.status(500).json({
+      message: 'Erro ao atualizar produto com id ' + req.params.id,
     });
+  }
 };
 
-// Deleta um produto pelo ID 
-exports.delete = (req, res) => {
-    Produto.delete(req.params.id, (err, data) => {
-        if (err) {
-            if (err.kind === "not_found") res.status(404).send({ message: `Produto não encontrado com id ${req.params.id}.` });
-            else res.status(500).send({ message: "Não foi possível deletar o produto com id " + req.params.id });
-        } else res.send({ message: `Produto foi deletado com sucesso!` });
+exports.delete = async (req, res) => {
+  try {
+    await Produto.delete(req.params.id);
+    return res
+      .status(200)
+      .json({ message: 'Produto foi deletado com sucesso!' });
+  } catch (err) {
+    if (err?.kind === 'not_found') {
+      return res.status(404).json({
+        message: `Produto não encontrado com id ${req.params.id}.`,
+      });
+    }
+    return res.status(500).json({
+      message:
+        'Não foi possível deletar o produto com id ' + req.params.id,
     });
+  }
 };

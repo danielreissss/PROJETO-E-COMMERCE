@@ -1,29 +1,29 @@
-// backend/middleware/auth.middleware.js
 const jwt = require('jsonwebtoken');
 
-// 1. Verifica se o usuário está logado
-exports.verifyToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Formato "Bearer TOKEN"
+const verifyToken = (req, res, next) => {
+  const header = req.headers['authorization'] || '';
+  const parts = header.split(' ');
+  const token = parts.length === 2 && parts[0] === 'Bearer' ? parts[1] : null;
 
-    if (token == null) {
-        return res.status(401).send({ message: "Acesso negado. Token não fornecido." });
+  if (!token) {
+    return res.status(401).json({ message: 'Acesso negado. Token não fornecido.' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET || 'secret', (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Token inválido ou expirado.' });
     }
-
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-        if (err) {
-            return res.status(403).send({ message: "Token inválido ou expirado." });
-        }
-        req.user = user; // Salva o usuário (id, cargo) no 'req'
-        next();
-    });
+    req.userId = decoded.id;
+    req.userRole = decoded.cargo;
+    return next();
+  });
 };
 
-// 2. Verifica se o usuário é Administrador
-// (Note que usamos 'administrador', como no seu banco de dados)
-exports.isAdmin = (req, res, next) => {
-    if (req.user.cargo !== 'administrador') { 
-        return res.status(403).send({ message: "Acesso restrito a administradores." });
-    }
-    next();
+const onlyAdmin = (req, res, next) => {
+  if (req.userRole !== 'administrador') {
+    return res.status(403).json({ message: 'Acesso restrito a administradores' });
+  }
+  return next();
 };
+
+module.exports = { verifyToken, onlyAdmin };

@@ -1,73 +1,77 @@
-// backend/model/compra.model.js
-const dbConnection = require('../database.js');
+// backend/compra.model.js
+const db = require('../database');
 
 const Compra = {};
 
-// Listar todas as compras (com nome do cliente)
-Compra.getAll = (callback) => {
-    const sql = `
-        SELECT 
-            c.id, c.cliente_id, c.data_pedido, c.status,
-            cl.nome as cliente_nome
-        FROM compra c
-        JOIN cliente cl ON c.cliente_id = cl.id
-    `;
-    dbConnection.query(sql, callback);
+Compra.create = async ({ cliente_id, produtos }) => {
+  const conn = db;
+
+  const [result] = await conn.query(
+    'INSERT INTO compra (cliente_id, status) VALUES (?, ?)',
+    [cliente_id, 'Pendente']
+  );
+
+  const compraId = result.insertId;
+
+  for (const p of produtos) {
+    await conn.query(
+      'INSERT INTO compra_produtos (compra_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)',
+      [compraId, p.produto_id, p.quantidade, p.preco_unitario]
+    );
+  }
+
+  return { id: compraId, cliente_id, status: 'Pendente', produtos };
 };
 
-// Buscar uma compra específica por ID
-Compra.getById = (id, callback) => {
-    dbConnection.query('SELECT * FROM compra WHERE id = ?', [id], (err, res) => {
-        if (err) {
-            callback(err, null);
-            return;
-        }
-        if (res.length) {
-            callback(null, res[0]);
-            return;
-        }
-        callback({ kind: "not_found" }, null);
-    });
+Compra.getById = async (id) => {
+  const [rows] = await db.query(
+    'SELECT * FROM compra WHERE id = ?',
+    [id]
+  );
+
+  if (!rows || rows.length === 0) {
+    throw { kind: 'not_found' };
+  }
+
+  const compra = rows[0];
+
+  const [itens] = await db.query(
+    'SELECT produto_id, quantidade, preco_unitario FROM compra_produtos WHERE compra_id = ?',
+    [id]
+  );
+
+  return { ...compra, produtos: itens };
 };
 
-// Listar todas as compras de um cliente específico
-Compra.findByClienteId = (clienteId, callback) => {
-    dbConnection.query('SELECT * FROM compra WHERE cliente_id = ?', [clienteId], callback);
+Compra.updateStatus = async (id, status) => {
+  const [result] = await db.query(
+    'UPDATE compra SET status = ? WHERE id = ?',
+    [status, id]
+  );
+
+  if (!result || result.affectedRows === 0) {
+    throw { kind: 'not_found' };
+  }
+
+  return { id: Number(id), status };
 };
 
-// Registrar uma nova compra (apenas a "casca" da compra)
-Compra.create = (novaCompra, callback) => {
-    dbConnection.query('INSERT INTO compra SET ?', novaCompra, callback);
-};
+Compra.delete = async (id) => {
+  await db.query(
+    'DELETE FROM compra_produtos WHERE compra_id = ?',
+    [id]
+  );
 
-// NOVO: Atualizar uma compra (ex: status)
-Compra.update = (id, dados, callback) => {
-    dbConnection.query('UPDATE compra SET ? WHERE id = ?', [dados, id], (err, res) => {
-        if (err) {
-            callback(err, null);
-            return;
-        }
-        if (res.affectedRows === 0) {
-            callback({ kind: "not_found" }, null);
-            return;
-        }
-        callback(null, { id: id, ...dados });
-    });
-};
+  const [result] = await db.query(
+    'DELETE FROM compra WHERE id = ?',
+    [id]
+  );
 
-// NOVO: Deletar uma compra
-Compra.delete = (id, callback) => {
-    dbConnection.query('DELETE FROM compra WHERE id = ?', [id], (err, res) => {
-        if (err) {
-            callback(err, null);
-            return;
-        }
-        if (res.affectedRows === 0) {
-            callback({ kind: "not_found" }, null);
-            return;
-        }
-        callback(null, res);
-    });
+  if (!result || result.affectedRows === 0) {
+    throw { kind: 'not_found' };
+  }
+
+  return true;
 };
 
 module.exports = Compra;

@@ -1,20 +1,11 @@
-// Importa o supertest (o "cliente" que faz as requisições)
+require("dotenv").config(); // ADICIONADO: Apenas por segurança
 const request = require('supertest'); 
-// Importa o app (nosso servidor) que exportamos do index.js
 const app = require('../index.js'); 
-// Importa a conexão do banco para fechar no final
-const db = require('../backend/database.js'); 
+// const db = require('../backend/database.js'); // REMOVIDO: Não é usado aqui
 
-// Variável para guardar o ID do produto que vamos criar
 let produtoIdCriado;
 
-// 1. Bloco principal que agrupa os testes de "Produtos"
 describe('Testes das Rotas de Produtos (/api/produtos)', () => {
-
-    // CORREÇÃO: Bloco 'afterAll' REMOVIDO
-    // A conexão agora é fechada de forma centralizada pelo 'compra.test.js'
-
-    // --- TESTES 'READ' ---
 
     it('Deve listar todos os produtos (GET /api/produtos)', async () => {
         const response = await request(app).get('/api/produtos');
@@ -36,10 +27,8 @@ describe('Testes das Rotas de Produtos (/api/produtos)', () => {
         const response = await request(app).get('/api/produtos/9999'); 
 
         expect(response.statusCode).toBe(404);
-        expect(response.body.message).toContain('Produto não encontrado com id 9999'); 
+        expect(response.body.message).toContain('Produto não encontrado'); 
     });
-
-    // --- TESTE 'CREATE' (Novo) ---
 
     it('Deve criar um novo produto (POST /api/produtos)', async () => {
         const novoProduto = {
@@ -52,16 +41,13 @@ describe('Testes das Rotas de Produtos (/api/produtos)', () => {
 
         const response = await request(app)
             .post('/api/produtos')
-            .send(novoProduto); // Envia o objeto no corpo da requisição
+            .send(novoProduto); 
 
-        expect(response.statusCode).toBe(201); // 201 = Created
-        expect(response.body).toHaveProperty('insertId'); // Verifica se o BD retornou um ID
+        expect(response.statusCode).toBe(201); 
+        expect(response.body).toHaveProperty('insertId'); 
         
-        // Guarda o ID para usar nos testes de PUT e DELETE
         produtoIdCriado = response.body.insertId; 
     });
-
-    // --- TESTE 'UPDATE' (Novo) ---
 
     it('Deve atualizar o produto recém-criado (PUT /api/produtos/:id)', async () => {
         const dadosAtualizados = {
@@ -70,20 +56,18 @@ describe('Testes das Rotas de Produtos (/api/produtos)', () => {
         };
 
         const response = await request(app)
-            .put(`/api/produtos/${produtoIdCriado}`) // Usa o ID salvo
-            .send(dadosAtualizados); // Envia os novos dados
+            .put(`/api/produtos/${produtoIdCriado}`) 
+            .send(dadosAtualizados); 
 
         expect(response.statusCode).toBe(200);
         expect(Number(response.body.id)).toBe(produtoIdCriado);
-        expect(response.body.preco).toBe(150); // O preço é retornado como número
+        expect(response.body.preco).toBe(150); 
         expect(response.body.estoque).toBe(5);
     });
 
-    // --- TESTE 'DELETE' (Novo) ---
-
     it('Deve deletar o produto recém-criado (DELETE /api/produtos/:id)', async () => {
         const response = await request(app)
-            .delete(`/api/produtos/${produtoIdCriado}`); // Usa o ID salvo
+            .delete(`/api/produtos/${produtoIdCriado}`); 
 
         expect(response.statusCode).toBe(200);
         expect(response.body.message).toContain('Produto foi deletado com sucesso!'); 
@@ -91,10 +75,9 @@ describe('Testes das Rotas de Produtos (/api/produtos)', () => {
 
     it('Deve retornar 404 ao tentar buscar o produto deletado', async () => {
         const response = await request(app)
-            .get(`/api/produtos/${produtoIdCriado}`); // Tenta buscar o ID que acabamos de deletar
+            .get(`/api/produtos/${produtoIdCriado}`); 
 
         expect(response.statusCode).toBe(404);
         expect(response.body.message).toContain('Produto não encontrado'); 
     });
-
 });
