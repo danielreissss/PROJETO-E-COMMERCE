@@ -22,7 +22,7 @@ O projeto implementa um banco de dados relacional com três entidades principais
 ---
 
 ## 🎬 Demonstração em vídeo
-[Assista à demonstração no YouTube]
+Assista à demonstração no YouTube:
 
 (https://www.youtube.com/watch?v=k_6HdPaUzqE)
 
