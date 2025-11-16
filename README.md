@@ -192,21 +192,33 @@ cd PROJETO-E-COMMERCE
 Na raiz do projeto:
 
 Configs do Banco (para o Docker Compose)
+
 DB_HOST=db
+
 DB_USER=daniel
+
 DB_PASS=daniel1
+
 DB_NAME=eCommerce
+
 DB_PORT=3306
+
 DB_PASS_ROOT=daniel
 
-Chave Secreta do JWT
+Chave Secreta do JWT:
+
 JWT_SECRET=petronio-labubu-jwt-123!@
 
-Configs do Nodemailer (Mailtrap, SendGrid, etc.)
+Configs do Nodemailer (Mailtrap, SendGrid, etc.):
+
 EMAIL_HOST=smtp.example.com
+
 EMAIL_PORT=587
+
 EMAIL_SECURE=false
+
 EMAIL_USER=seu-email@example.com
+
 EMAIL_PASS=sua-senha-de-app
 
 
@@ -306,22 +318,34 @@ npm install
 
 ### 4. Crie o arquivo `.env`
 
-Configs do Banco (Local)
+Configs do Banco (Local):
+
 DB_HOST=localhost
+
 DB_USER=daniel
+
 DB_PASS=daniel1
+
 DB_NAME=eCommerce
+
 DB_PORT=3307
+
 DB_PASS_ROOT=daniel
 
-Chave Secreta do JWT
+Chave Secreta do JWT:
+
 JWT_SECRET=petronio-labubu-jwt-123!@
 
-Configs do Nodemailer
+Configs do Nodemailer:
+
 EMAIL_HOST=smtp.example.com
+
 EMAIL_PORT=587
+
 EMAIL_SECURE=false
+
 EMAIL_USER=seu-email@example.com
+
 EMAIL_PASS=sua-senha-de-app
 
 
