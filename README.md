@@ -133,16 +133,27 @@ Os testes utilizam o app Express diretamente (sem subir servidor HTTP) por meio 
 
 .
 ├── index.js # Ponto de entrada da aplicação Express
+
 ├── backend
+
 │ ├── routes # Definição dos endpoints (clientes, produtos, compras, itens)
+
 │ ├── controller # Regras de negócio da API
+
 │ ├── model # Acesso ao banco (MySQL)
+
 │ ├── middleware # auth.middleware.js (JWT, controle de acesso)
+
 │ └── database
+
 │ └── setupDatabase.js # Script para criar/popular o banco
+
 ├── database.js # Configuração do pool MySQL (mysql2/promise)
+
 ├── docker-compose.yml # Orquestração de containers (API + MySQL)
+
 ├── package.json # Dependências e scripts (start, test, etc.)
+
 └── .env # Configurações sensíveis (banco, JWT, e-mail)
 
 
