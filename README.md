@@ -1,441 +1,6 @@
 # Desafio Backend - API E-Commerce
 
-`![Status: Em Desenvolvimento](https://img.shields.io/badge/status-em_desenvolvimento-blue)`
-
-## 📜 Sobre o Projeto
-
-Esta é uma API RESTful para um sistema de E-Commerce, desenvolvida como parte do desafio de backend. O projeto implementa um banco de dados relacional com três entidades principais (Cliente, Produto, Compra) e foca em segurança, autenticação e boas práticas de desenvolvimento.
-
-### Lógicas Implementadas
-
-O sistema possui as seguintes funcionalidades principais:
-
-* **Autenticação e Autorização:**
-    * Registro de novos clientes com criptografia de senha (`bcryptjs`).
-    * Login via E-mail e Senha, retornando um **Token JWT** para autenticação.
-    * Middleware de autenticação que protege rotas que exigem login (`verifyToken`).
-* **Controle de Acesso (Níveis de Usuário):**
-    * O sistema diferencia usuários `padrao` e `administrador`.
-    * Rotas críticas (como deletar um cliente) são protegidas por um middleware que verifica se o usuário é um administrador (`isAdmin`).
-* **Recuperação de Senha:**
-    * Um fluxo completo de "esqueci minha senha" foi implementado.
-    * O usuário solicita um reset via e-mail (`/forgot-password`).
-    * O sistema gera um token seguro (`crypto`), salva no banco com tempo de expiração, e envia um link de reset para o e-mail do usuário (`nodemailer`).
-    * O usuário usa o link para definir uma nova senha (`/reset-password`).
-* **CRUDs Completos:**
-    * **Clientes:** CRUD completo, com a rota de `DELETE` restrita a administradores.
-    * **Produtos:** CRUD completo para gerenciamento de produtos no inventário.
-    * **Compras:** CRUD completo para gerenciar pedidos.
-* **Lógica de Transação (ACID):**
-    * Para garantir a integridade dos dados, **transações SQL** são usadas nas operações de `Compra`.
-    * Ao **criar uma compra**, a API primeiro insere a "casca" da compra e depois insere todos os produtos. Se qualquer item falhar, a transação inteira é desfeita (`ROLLBACK`), impedindo compras "órfãs".
-    * Ao **deletar uma compra**, a transação garante que primeiro todos os itens em `compra_produtos` são removidos antes de deletar a `compra` principal.
-
----
-
-## 🛠️ Tecnologias e Justificativas
-
-| Biblioteca | Justificativa |
-| :--- | :--- |
-| **Node.js** | Ambiente de execução JavaScript no lado do servidor, permitindo a construção da API. |
-| **Express** | Framework web minimalista para Node.js. Usado para criar o servidor, definir rotas (`.routes.js`) e gerenciar middlewares. |
-| **MySQL (Banco)** | Banco de dados relacional, conforme exigido pelo desafio. |
-| **mysql2** | Driver otimizado para Node.js que se conecta ao banco de dados MySQL, com suporte a Promises e transações. |
-| **Docker** | Plataforma de containerização. Usada para criar um ambiente de desenvolvimento e produção padronizado e isolado, facilitando o deploy. |
-| **jsonwebtoken (JWT)** | Usado para implementar a autenticação baseada em token. Permite que a API verifique a identidade do usuário em rotas protegidas. |
-| **bcryptjs** | Essencial para segurança. Usado para criptografar (hash) as senhas dos usuários antes de salvá-las no banco de dados. |
-| **dotenv** | Carrega variáveis de ambiente (como senhas de banco e chaves secretas) do arquivo `.env` para `process.env`, mantendo dados sensíveis fora do código. |
-| **nodemailer** | Usado na funcionalidade "Esqueci minha senha" para enviar e-mails transacionais (o link de recuperação) para os usuários. |
-| **crypto** | Módulo nativo do Node.js. Usado para gerar tokens aleatórios e seguros para o processo de recuperação de senha. |
-
----
-
-## 🚀 Como Executar o Projeto
-
-Você pode rodar este projeto de duas formas: localmente (para desenvolvimento rápido) ou via Docker (o método recomendado para simular a produção).
-
-### Pré-requisitos
-
-* [Node.js](https://nodejs.org/) (v16 ou superior)
-* [Docker](https://www.docker.com/products/docker-desktop/) e [Docker Compose](https://docs.docker.com/compose/install/)
-* Um cliente de API (como [Insomnia](https://insomnia.rest/) ou [Postman](https://www.postman.com/))
-* Um cliente de Banco de Dados (como [MySQL Workbench](https://www.mysql.com/products/workbench/), já que você o utiliza)
-
----
-
-### A. Execução com Docker (Recomendado)
-
-Este método irá criar e orquestrar dois containers: um para a API Node.js e outro para o banco de dados MySQL.
-
-**1. Clone o repositório**
-```bash
-git clone [https://github.com/danielreissss/PROJETO-E-COMMERCE]
-cd seu-repositorio
-
-2. Crie o arquivo .env Crie um arquivo chamado .env na raiz do projeto. Este arquivo é essencial para o Docker Compose.
-
-Atenção: Note que o DB_HOST é db, que é o nome do serviço do banco de dados definido no docker-compose.yml.
-
-# Configs do Banco (para o Docker Compose)
-DB_HOST=db
-DB_USER=daniel
-DB_PASS=daniel1
-DB_NAME=eCommerce
-DB_PORT=3306
-DB_PASS_ROOT=daniel
-
-# Chave Secreta do JWT
-JWT_SECRET=petronio-labubu-jwt-123!@
-
-# Configs do Nodemailer (Preencha com um serviço como Mailtrap ou SendGrid)
-EMAIL_HOST=smtp.example.com
-EMAIL_PORT=587
-EMAIL_SECURE=false
-EMAIL_USER=seu-email@example.com
-EMAIL_PASS=sua-senha-de-app
-
-3. Crie o arquivo Dockerfile Crie um arquivo chamado Dockerfile (sem extensão) na raiz:
-
-# Imagem base do Node.js
-FROM node:18-alpine
-
-# Define o diretório de trabalho dentro do container
-WORKDIR /app
-
-# Copia os arquivos de dependência
-COPY package*.json ./
-
-# Instala as dependências
-RUN npm install
-
-# Copia o restante do código da aplicação
-COPY . .
-
-# Expõe a porta que a aplicação usa
-EXPOSE 3000
-
-# Comando para iniciar a aplicação
-CMD ["node", "index.js"]
-
-4. Crie o arquivo docker-compose.yml Crie um arquivo chamado docker-compose.yml na raiz:
-
-version: '3.8'
-
-services:
-  # Serviço da API Node.js
-  api:
-    build: .
-    ports:
-      - "3000:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
-    env_file: ./.env
-    depends_on:
-      - db
-    command: npm start # ou node index.js (depende do seu package.json)
-
-  # Serviço do Banco de Dados MySQL
-  db:
-    image: mysql:8.0
-    restart: always
-    environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASS}
-      MYSQL_ROOT_PASSWORD: ${DB_PASS_ROOT}
-    ports:
-      # Expõe na porta 3307 da sua máquina (para conectar o Workbench)
-      - "3307:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
-
-volumes:
-  mysql-data:
-
-  5. Suba os containers
-
-  docker-compose up --build
-
-  Aqui está o texto completo formatado em Markdown. Você pode copiar tudo o que está dentro do bloco de código abaixo e colar diretamente em seu arquivo README.md no VS Code ou no GitHub.
-
-Markdown
-
-# Desafio Backend - API E-Commerce
-
-`![Status: Em Desenvolvimento](https://img.shields.io/badge/status-em_desenvolvimento-blue)`
-
-## 📜 Sobre o Projeto
-
-Esta é uma API RESTful para um sistema de E-Commerce, desenvolvida como parte do desafio de backend. O projeto implementa um banco de dados relacional com três entidades principais (Cliente, Produto, Compra) e foca em segurança, autenticação e boas práticas de desenvolvimento.
-
-### Lógicas Implementadas
-
-O sistema possui as seguintes funcionalidades principais:
-
-* **Autenticação e Autorização:**
-    * Registro de novos clientes com criptografia de senha (`bcryptjs`).
-    * Login via E-mail e Senha, retornando um **Token JWT** para autenticação.
-    * Middleware de autenticação que protege rotas que exigem login (`verifyToken`).
-* **Controle de Acesso (Níveis de Usuário):**
-    * O sistema diferencia usuários `padrao` e `administrador`.
-    * Rotas críticas (como deletar um cliente) são protegidas por um middleware que verifica se o usuário é um administrador (`isAdmin`).
-* **Recuperação de Senha:**
-    * Um fluxo completo de "esqueci minha senha" foi implementado.
-    * O usuário solicita um reset via e-mail (`/forgot-password`).
-    * O sistema gera um token seguro (`crypto`), salva no banco com tempo de expiração, e envia um link de reset para o e-mail do usuário (`nodemailer`).
-    * O usuário usa o link para definir uma nova senha (`/reset-password`).
-* **CRUDs Completos:**
-    * **Clientes:** CRUD completo, com a rota de `DELETE` restrita a administradores.
-    * **Produtos:** CRUD completo para gerenciamento de produtos no inventário.
-    * **Compras:** CRUD completo para gerenciar pedidos.
-* **Lógica de Transação (ACID):**
-    * Para garantir a integridade dos dados, **transações SQL** são usadas nas operações de `Compra`.
-    * Ao **criar uma compra**, a API primeiro insere a "casca" da compra e depois insere todos os produtos. Se qualquer item falhar, a transação inteira é desfeita (`ROLLBACK`), impedindo compras "órfãs".
-    * Ao **deletar uma compra**, a transação garante que primeiro todos os itens em `compra_produtos` são removidos antes de deletar a `compra` principal.
-
----
-
-## 🛠️ Tecnologias e Justificativas
-
-| Biblioteca | Justificativa |
-| :--- | :--- |
-| **Node.js** | Ambiente de execução JavaScript no lado do servidor, permitindo a construção da API. |
-| **Express** | Framework web minimalista para Node.js. Usado para criar o servidor, definir rotas (`.routes.js`) e gerenciar middlewares. |
-| **MySQL (Banco)** | Banco de dados relacional, conforme exigido pelo desafio. |
-| **mysql2** | Driver otimizado para Node.js que se conecta ao banco de dados MySQL, com suporte a Promises e transações. |
-| **Docker** | Plataforma de containerização. Usada para criar um ambiente de desenvolvimento e produção padronizado e isolado, facilitando o deploy. |
-| **jsonwebtoken (JWT)** | Usado para implementar a autenticação baseada em token. Permite que a API verifique a identidade do usuário em rotas protegidas. |
-| **bcryptjs** | Essencial para segurança. Usado para criptografar (hash) as senhas dos usuários antes de salvá-las no banco de dados. |
-| **dotenv** | Carrega variáveis de ambiente (como senhas de banco e chaves secretas) do arquivo `.env` para `process.env`, mantendo dados sensíveis fora do código. |
-| **nodemailer** | Usado na funcionalidade "Esqueci minha senha" para enviar e-mails transacionais (o link de recuperação) para os usuários. |
-| **crypto** | Módulo nativo do Node.js. Usado para gerar tokens aleatórios e seguros para o processo de recuperação de senha. |
-
----
-
-## 🚀 Como Executar o Projeto
-
-Você pode rodar este projeto de duas formas: localmente (para desenvolvimento rápido) ou via Docker (o método recomendado para simular a produção).
-
-### Pré-requisitos
-
-* [Node.js](https://nodejs.org/) (v16 ou superior)
-* [Docker](https://www.docker.com/products/docker-desktop/) e [Docker Compose](https://docs.docker.com/compose/install/)
-* Um cliente de API (como [Insomnia](https://insomnia.rest/) ou [Postman](https://www.postman.com/))
-* Um cliente de Banco de Dados (como [MySQL Workbench](https://www.mysql.com/products/workbench/), já que você o utiliza)
-
----
-
-### A. Execução com Docker (Recomendado)
-
-Este método irá criar e orquestrar dois containers: um para a API Node.js e outro para o banco de dados MySQL.
-
-**1. Clone o repositório**
-```bash
-git clone [https://github.com/seu-usuario/seu-repositorio.git](https://github.com/seu-usuario/seu-repositorio.git)
-cd seu-repositorio
-2. Crie o arquivo .env Crie um arquivo chamado .env na raiz do projeto. Este arquivo é essencial para o Docker Compose.
-
-Atenção: Note que o DB_HOST é db, que é o nome do serviço do banco de dados definido no docker-compose.yml.
-
-Ini, TOML
-
-# Configs do Banco (para o Docker Compose)
-DB_HOST=db
-DB_USER=daniel
-DB_PASS=daniel1
-DB_NAME=eCommerce
-DB_PORT=3306
-DB_PASS_ROOT=daniel
-
-# Chave Secreta do JWT
-JWT_SECRET=petronio-labubu-jwt-123!@
-
-# Configs do Nodemailer (Preencha com um serviço como Mailtrap ou SendGrid)
-EMAIL_HOST=smtp.example.com
-EMAIL_PORT=587
-EMAIL_SECURE=false
-EMAIL_USER=seu-email@example.com
-EMAIL_PASS=sua-senha-de-app
-3. Crie o arquivo Dockerfile Crie um arquivo chamado Dockerfile (sem extensão) na raiz:
-
-Dockerfile
-
-# Imagem base do Node.js
-FROM node:18-alpine
-
-# Define o diretório de trabalho dentro do container
-WORKDIR /app
-
-# Copia os arquivos de dependência
-COPY package*.json ./
-
-# Instala as dependências
-RUN npm install
-
-# Copia o restante do código da aplicação
-COPY . .
-
-# Expõe a porta que a aplicação usa
-EXPOSE 3000
-
-# Comando para iniciar a aplicação
-CMD ["node", "index.js"]
-4. Crie o arquivo docker-compose.yml Crie um arquivo chamado docker-compose.yml na raiz:
-
-YAML
-
-version: '3.8'
-
-services:
-  # Serviço da API Node.js
-  api:
-    build: .
-    ports:
-      - "3000:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
-    env_file: ./.env
-    depends_on:
-      - db
-    command: npm start # ou node index.js (depende do seu package.json)
-
-  # Serviço do Banco de Dados MySQL
-  db:
-    image: mysql:8.0
-    restart: always
-    environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASS}
-      MYSQL_ROOT_PASSWORD: ${DB_PASS_ROOT}
-    ports:
-      # Expõe na porta 3307 da sua máquina (para conectar o Workbench)
-      - "3307:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
-
-volumes:
-  mysql-data:
-5. Suba os containers
-
-Bash
-
-docker-compose up --build
-(Use -d para rodar em segundo plano).
-
-6. Execute o Setup do Banco (Primeira vez) Com os containers rodando, abra outro terminal e execute o script de setup dentro do container da API. Isso criará as tabelas e populará os produtos.
-
-docker-compose exec api node backend/database/setupDatabase.js
-
-Pronto! A API estará rodando em http://localhost:3000 e o banco estará acessível no MySQL Workbench em localhost:3307.
-
-B. Execução Local (Sem Docker):
-
-1. Clone o repositório:
-
-git clone [https://github.com/danielreissss/PROJETO-E-COMMERCE]
-cd seu-repositorio
-
-2. Instale as dependências:
-
-npm install
-
-3. Configure o Banco de Dados
-
-Abra o MySQL Workbench e inicie seu servidor MySQL.
-
-Verifique se as credenciais (usuário, senha, porta) batem com as do seu ambiente.
-
-4. Crie o arquivo .env Crie um arquivo .env na raiz do projeto. Preencha com suas credenciais locais e do serviço de e-mail.
-
-# Configs do Banco (Local)
-DB_HOST=localhost
-DB_USER=daniel
-DB_PASS=daniel1
-DB_NAME=eCommerce
-DB_PORT=3307
-DB_PASS_ROOT=daniel
-
-# Chave Secreta do JWT
-JWT_SECRET=petronio-labubu-jwt-123!@
-
-# Configs do Nodemailer (Preencha com um serviço como Mailtrap ou SendGrid)
-EMAIL_HOST=smtp.example.com
-EMAIL_PORT=587
-EMAIL_SECURE=false
-EMAIL_USER=seu-email@example.com
-EMAIL_PASS=sua-senha-de-app
-
-5. Execute o Setup do Banco Este script irá criar o banco de dados (se não existir), as tabelas e popular a tabela produtos.
-
-node backend/database/setupDatabase.js
-
-6. Inicie o servidor
-
-node index.js
-
-A API estará rodando em http://localhost:3000.
-
-🗺️ Estrutura de Endpoints (API)
-Autenticação (/api/clientes)
-POST /register: Registra um novo cliente.
-
-POST /login: Realiza o login e retorna um token JWT.
-
-POST /forgot-password: Inicia o processo de recuperação de senha (envia e-mail).
-
-POST /reset-password: Conclui o processo de recuperação de senha (usa token da URL).
-
-Clientes (/api/clientes):
-
-Rotas protegidas por token
-
-GET /: Lista todos os clientes (sem dados sensíveis).
-
-GET /:id: Busca um cliente específico.
-
-PUT /:id: Atualiza um cliente.
-
-DELETE /:id: Deleta um cliente (Apenas Administradores).
-
-Produtos (/api/produtos):
-
-GET /: Lista todos os produtos.
-
-GET /:id: Busca um produto específico.
-
-POST /: Cria um novo produto.
-
-PUT /:id: Atualiza um produto.
-
-DELETE /:id: Deleta um produto.
-
-Compras (/api/compras):
-
-GET /: Lista todas as compras.
-
-GET /:id: Busca uma compra específica (e seus produtos).
-
-POST /: Cria uma nova compra (com seus produtos).
-
-PUT /:id: Atualiza o status de uma compra.
-
-DELETE /:id: Deleta uma compra (e seus produtos associados).
-
-Itens da Compra (/api/compras/:compraId/items)
-GET /: Lista todos os produtos de uma compra específica.
-
-POST /: Adiciona um novo produto a uma compra.
-
-PUT /:produtoId: Atualiza um item (ex: quantidade) em uma compra.
-
-DELETE /:produtoId: Remove um item de uma compra.
-
-
-
-
+![Status: Em Desenvolvimento](https://img.shields.io/badge/status-em_desenvolvimento-blue)
 
 <p align="center">
 <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript" />
@@ -446,3 +11,394 @@ DELETE /:produtoId: Remove um item de uma compra.
 &nbsp;
 <img src="https://img.shields.io/badge/JWT-DB4C37?style=for-the-badge&logo=json-web-tokens&logoColor=white" alt="JWT" />
 </p>
+
+---
+
+## 📜 Sobre o Projeto
+
+Esta é uma API RESTful para um sistema de E-Commerce, desenvolvida como parte de um desafio de backend.  
+O projeto implementa um banco de dados relacional com três entidades principais (**Cliente**, **Produto**, **Compra**) e uma tabela de relação para itens de compra (`compra_produtos`), focando em **segurança**, **autenticação**, **boas práticas** e **transações ACID**.
+
+---
+
+## 🧠 Visão Geral da Arquitetura
+
+A aplicação segue uma arquitetura em camadas, separando responsabilidades:
+
+| Camada        | Descrição |
+| :------------ | :-------- |
+| **Rotas (`.routes.js`)** | Definem os endpoints REST (clientes, produtos, compras, itens de compra). |
+| **Controllers (`.controller.js`)** | Implementam as regras de negócio de cada recurso (validações, fluxos e respostas HTTP). |
+| **Models (`.model.js`)** | Acessam o banco de dados MySQL usando `mysql2/promise` e o pool configurado em `database.js`. |
+| **Middleware** | Autenticação/autorização (`auth.middleware.js`), validação de JWT e verificação de permissões. |
+| **Scripts de Banco** | `backend/database/setupDatabase.js` cria o schema, as tabelas e popula dados iniciais (produtos). |
+
+---
+
+## 🧩 Modelo de Dados
+
+### Entidades Principais
+
+| Entidade          | Campos principais (conceitual) |
+| :---------------- | :----------------------------- |
+| **Cliente**       | `id`, `nome`, `email`, `senha_hash`, `cargo` (`padrao` / `administrador`), campos auxiliares para reset de senha (token/expiração). |
+| **Produto**       | `id`, `nome`, `descricao`, `preco`, `estoque`, `categoria` (se houver), timestamps. |
+| **Compra**        | `id`, `id_cliente`, `status`, `total`, `data_criacao`, `data_atualizacao`. |
+| **compra_produtos** | `id`, `id_compra`, `id_produto`, `quantidade`, `preco_unitario_no_momento`. |
+
+### Relações
+
+- Um **Cliente** possui muitas **Compras**.  
+- Uma **Compra** possui muitos **Produtos** via tabela `compra_produtos`.  
+- Um **Produto** pode estar em muitas **Compras**.  
+
+---
+
+## ⚙️ Lógicas Implementadas
+
+### 🔐 Autenticação e Autorização
+
+- Registro de novos clientes com criptografia de senha (`bcryptjs`).  
+- Login via e-mail e senha, retornando um **Token JWT** para autenticação.  
+- Middleware de autenticação que protege rotas que exigem login (`verifyToken`).  
+
+### 🧩 Controle de Acesso (Níveis de Usuário)
+
+- Diferenciação de usuários `padrao` e `administrador`.  
+- Rotas críticas (como deletar cliente) protegidas por middleware de autorização (`isAdmin` / `onlyAdmin`).  
+
+### ✉️ Recuperação de Senha
+
+Fluxo completo de [translate:"esqueci minha senha"]:
+
+1. Usuário chama `POST /forgot-password` informando o e-mail.  
+2. O sistema gera um token seguro (`crypto`), salva no banco com tempo de expiração.  
+3. Um e-mail de recuperação é enviado com um link contendo o token (`nodemailer`).  
+4. O usuário chama `POST /reset-password` com o token e a nova senha.  
+
+### 📦 CRUDs Completos
+
+- **Clientes:** CRUD completo (com `DELETE` restrito a administradores).  
+- **Produtos:** CRUD completo para gerenciamento do catálogo.  
+- **Compras:** CRUD completo para gerenciar pedidos.  
+
+### 💾 Lógica de Transação (ACID)
+
+Para garantir integridade dos dados:
+
+- Ao **criar uma compra**:
+  - Cria a compra principal.
+  - Insere os itens na tabela `compra_produtos`.
+  - Em caso de erro em qualquer etapa, executa `ROLLBACK`, evitando registros inconsistentes.  
+
+- Ao **deletar uma compra**:
+  - Primeiro remove os itens em `compra_produtos`.
+  - Depois remove o registro principal da compra.  
+
+---
+
+## 🛠️ Tecnologias e Justificativas
+
+| Biblioteca / Ferramenta | Justificativa |
+| :---------------------- | :----------- |
+| **Node.js** | Ambiente de execução JavaScript no backend, ideal para APIs REST. |
+| **Express** | Framework minimalista para criação de servidor HTTP, rotas e middlewares. |
+| **MySQL** | Banco de dados relacional utilizado para persistência de dados do e-commerce. |
+| **mysql2** | Driver otimizado para MySQL com suporte a Promises e transações. |
+| **Docker & Docker Compose** | Padronizam o ambiente (API + banco), facilitando setup, testes e deploy. |
+| **jsonwebtoken (JWT)** | Implementa autenticação baseada em token para rotas protegidas. |
+| **bcryptjs** | Realiza hash seguro de senhas antes de salvá-las no banco. |
+| **dotenv** | Gerencia variáveis de ambiente de forma segura. |
+| **nodemailer** | Envio de e-mails transacionais no fluxo de recuperação de senha. |
+| **crypto** | Geração de tokens aleatórios e seguros para reset de senha. |
+| **Jest + Supertest** | Testes automatizados de endpoints e regras de negócio. |
+
+---
+
+## 🧪 Testes Automatizados
+
+A aplicação conta com testes automatizados para garantir o comportamento esperado:
+
+| Arquivo de Teste      | Cenários testados |
+| :-------------------- | :---------------- |
+| `cliente.test.js`     | Registro, login, retorno do usuário autenticado, acesso a rotas protegidas. |
+| `produtos.test.js`    | CRUD de produtos (criar, listar, atualizar, deletar, erros). |
+| `compra.test.js`      | Criação de compra com itens, consulta do pedido, atualização de status. |
+
+Os testes utilizam o app Express diretamente (sem subir servidor HTTP) por meio de Jest + Supertest.
+
+---
+
+## 🧱 Estrutura de Pastas (Simplificada)
+
+.
+├── index.js # Ponto de entrada da aplicação Express
+├── backend
+│ ├── routes # Definição dos endpoints (clientes, produtos, compras, itens)
+│ ├── controller # Regras de negócio da API
+│ ├── model # Acesso ao banco (MySQL)
+│ ├── middleware # auth.middleware.js (JWT, controle de acesso)
+│ └── database
+│ └── setupDatabase.js # Script para criar/popular o banco
+├── database.js # Configuração do pool MySQL (mysql2/promise)
+├── docker-compose.yml # Orquestração de containers (API + MySQL)
+├── package.json # Dependências e scripts (start, test, etc.)
+└── .env # Configurações sensíveis (banco, JWT, e-mail)
+
+
+---
+
+## 🚀 Como Executar o Projeto
+
+Você pode rodar o projeto de duas formas:
+
+- **A. Com Docker (recomendado)** 🐳  
+- **B. Localmente, sem Docker** 💻  
+
+---
+
+### ✅ Pré-requisitos
+
+- Node.js (v16 ou superior)  
+- Docker e Docker Compose  
+- Cliente de API (Insomnia, Postman, etc.)  
+- Cliente de banco (MySQL Workbench, opcional)  
+
+---
+
+## A. Execução com Docker (Recomendado) 🐳
+
+Este método cria dois containers: **API Node.js** e **MySQL**.
+
+### 1. Clone o repositório
+
+git clone https://github.com/danielreissss/PROJETO-E-COMMERCE.git
+cd PROJETO-E-COMMERCE
+
+
+### 2. Crie o arquivo `.env`
+
+Na raiz do projeto:
+
+Configs do Banco (para o Docker Compose)
+DB_HOST=db
+DB_USER=daniel
+DB_PASS=daniel1
+DB_NAME=eCommerce
+DB_PORT=3306
+DB_PASS_ROOT=daniel
+
+Chave Secreta do JWT
+JWT_SECRET=petronio-labubu-jwt-123!@
+
+Configs do Nodemailer (Mailtrap, SendGrid, etc.)
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=seu-email@example.com
+EMAIL_PASS=sua-senha-de-app
+
+
+> 💡 **Importante:**  
+> O `DB_HOST` deve ser `db`, que é o nome do serviço do banco definido no `docker-compose.yml`.
+
+### 3. Dockerfile
+
+Crie um arquivo `Dockerfile` na raiz (se ainda não existir):
+
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["node", "index.js"]
+
+
+### 4. Arquivo `docker-compose.yml`
+
+version: '3.8'
+
+services:
+api:
+build: .
+ports:
+- "3000:3000"
+volumes:
+- .:/app
+- /app/node_modules
+env_file: ./.env
+depends_on:
+- db
+command: npm start
+
+db:
+image: mysql:8.0
+restart: always
+environment:
+MYSQL_DATABASE: ${DB_NAME}
+MYSQL_USER: ${DB_USER}
+MYSQL_PASSWORD: ${DB_PASS}
+MYSQL_ROOT_PASSWORD: ${DB_PASS_ROOT}
+ports:
+- "3307:3306"
+volumes:
+- mysql-data:/var/lib/mysql
+
+volumes:
+mysql-data:
+
+
+### 5. Suba os containers
+
+docker-compose up --build
+
+ou em segundo plano:
+docker-compose up --build -d
+
+
+### 6. Execute o setup do banco (primeira vez)
+
+docker-compose exec api node backend/database/setupDatabase.js
+
+
+Pronto! 🎉  
+
+- API: `http://localhost:3000`  
+- Banco para Workbench: `localhost:3307`  
+
+---
+
+## B. Execução Local (Sem Docker) 💻
+
+### 1. Clone o repositório
+
+git clone https://github.com/danielreissss/PROJETO-E-COMMERCE.git
+cd PROJETO-E-COMMERCE
+
+### 2. Instale as dependências
+npm install
+
+
+### 3. Configure o banco de dados
+
+- Inicie o servidor MySQL local.  
+- Crie o database se necessário (ex.: `eCommerce`).  
+- Garanta que usuário, senha e porta batem com o `.env`.  
+
+### 4. Crie o arquivo `.env`
+
+Configs do Banco (Local)
+DB_HOST=localhost
+DB_USER=daniel
+DB_PASS=daniel1
+DB_NAME=eCommerce
+DB_PORT=3307
+DB_PASS_ROOT=daniel
+
+Chave Secreta do JWT
+JWT_SECRET=petronio-labubu-jwt-123!@
+
+Configs do Nodemailer
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=seu-email@example.com
+EMAIL_PASS=sua-senha-de-app
+
+
+### 5. Execute o setup do banco
+
+node backend/database/setupDatabase.js
+
+
+### 6. Inicie o servidor
+
+npm start
+
+ou
+node index.js
+
+
+A API ficará disponível em: `http://localhost:3000` 🚀
+
+---
+
+## 🗺️ Estrutura de Endpoints (API)
+
+### 🔑 Autenticação (`/api/clientes`)
+
+| Método | Rota              | Descrição |
+| :----- | :---------------- | :-------- |
+| `POST` | `/register`       | Registra um novo cliente. |
+| `POST` | `/login`          | Realiza login e retorna um token JWT. |
+| `POST` | `/forgot-password`| Inicia o processo de recuperação de senha (envia e-mail). |
+| `POST` | `/reset-password` | Conclui o processo de reset de senha, usando o token enviado por e-mail. |
+
+---
+
+### 👤 Clientes (`/api/clientes`) – rotas protegidas por token
+
+| Método   | Rota   | Descrição |
+| :------- | :----- | :-------- |
+| `GET`    | `/`    | Lista todos os clientes (sem dados sensíveis). |
+| `GET`    | `/:id` | Busca um cliente específico. |
+| `PUT`    | `/:id` | Atualiza um cliente. |
+| `DELETE` | `/:id` | Deleta um cliente (**apenas administradores**). |
+
+---
+
+### 📦 Produtos (`/api/produtos`)
+
+| Método   | Rota   | Descrição |
+| :------- | :----- | :-------- |
+| `GET`    | `/`    | Lista todos os produtos. |
+| `GET`    | `/:id` | Busca um produto específico. |
+| `POST`   | `/`    | Cria um novo produto. |
+| `PUT`    | `/:id` | Atualiza um produto. |
+| `DELETE` | `/:id` | Deleta um produto. |
+
+---
+
+### 🧾 Compras (`/api/compras`)
+
+| Método   | Rota   | Descrição |
+| :------- | :----- | :-------- |
+| `GET`    | `/`    | Lista todas as compras. |
+| `GET`    | `/:id` | Busca uma compra específica (com seus produtos). |
+| `POST`   | `/`    | Cria uma nova compra (com seus produtos). |
+| `PUT`    | `/:id` | Atualiza o status de uma compra. |
+| `DELETE` | `/:id` | Deleta uma compra (e seus produtos associados). |
+
+---
+
+### 🧺 Itens da Compra (`/api/compras/:compraId/items`)
+
+| Método   | Rota           | Descrição |
+| :------- | :------------- | :-------- |
+| `GET`    | `/`            | Lista todos os produtos de uma compra específica. |
+| `POST`   | `/`            | Adiciona um novo produto a uma compra. |
+| `PUT`    | `/:produtoId`  | Atualiza um item (por exemplo, quantidade) em uma compra. |
+| `DELETE` | `/:produtoId`  | Remove um item de uma compra. |
+
+---
+
+## 💡 Dicas de Uso (Insomnia/Postman)
+
+- Sempre enviar o header nas rotas protegidas:  
+  - [translate:Authorization: Bearer <seu_token_jwt>]  
+- Fluxo recomendado para começar a testar:
+  1. `POST /api/clientes/register`  
+  2. `POST /api/clientes/login` (copiar o token)  
+  3. Criar/consultar produtos e compras autenticado.  
+
+---
+
+
