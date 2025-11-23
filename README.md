@@ -1,159 +1,166 @@
-# Desafio Backend - API E-Commerce
+![Status: Finalizado](https://img.shields.io/badge/status-finalizado-brightgreen)
 
-![Status: Em Desenvolvimento](https://img.shields.io/badge/status-em_desenvolvimento-blue)
+<p align="center">
+<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript" />
+&nbsp;
+<img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
+&nbsp;
+<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+&nbsp;
+<img src="https://img.shields.io/badge/JWT-DB4C37?style=for-the-badge&logo=json-web-tokens&logoColor=white" alt="JWT" />
+</p>
+
+---
 
 ## 📜 Sobre o Projeto
 
-Esta é uma API RESTful para um sistema de E-Commerce, desenvolvida como projeto da disciplina de Backend, utilizando Node.js, Express e MySQL.  
-O sistema implementa um banco de dados relacional com quatro entidades principais: **Cliente**, **Produto**, **Compra** e **Compra_Produtos**, garantindo integridade referencial e suporte a operações transacionais.  
-
-A API foi construída seguindo boas práticas de organização (camadas de *routes*, *controllers* e *models*), uso de variáveis de ambiente e padronização de respostas HTTP.  
-O foco é oferecer um backend funcional para um e-commerce simples, com endpoints para gerenciamento de clientes, produtos, compras e itens das compras.  
+Esta é uma API RESTful para um sistema de E-Commerce, desenvolvida como parte de um desafio de backend.  
+O projeto implementa um banco de dados relacional com três entidades principais (**Cliente**, **Produto**, **Compra**) e uma tabela de relação para itens de compra (`compra_produtos`), focando em **segurança**, **autenticação**, **boas práticas** e **transações ACID**.
 
 ---
 
-## 🧠 Lógicas Implementadas
+## 🎬 Demonstração em vídeo
+Assista à demonstração no YouTube:
 
-### Estrutura Geral da API
+(https://www.youtube.com/watch?v=k_6HdPaUzqE)
 
-- API construída em **Node.js + Express**, expondo rotas sob o prefixo `/api`.  
-- Organização em camadas:
-  - `backend/models` – comunicação com o banco de dados usando `mysql2` e *pools* de conexão.  
-  - `backend/controllers` – regras de negócio e validações básicas.  
-  - `backend/routes` – definição das rotas HTTP e vinculação com os controllers.  
-- Conexão com banco via `mysql2/promise`, utilizando um pool configurado em `backend/database.js`.  
+---
+
+## 🧠 Visão Geral da Arquitetura
+
+A aplicação segue uma arquitetura em camadas, separando responsabilidades:
+
+| Camada        | Descrição |
+| :------------ | :-------- |
+| **Rotas (`.routes.js`)** | Definem os endpoints REST (clientes, produtos, compras, itens de compra). |
+| **Controllers (`.controller.js`)** | Implementam as regras de negócio de cada recurso (validações, fluxos e respostas HTTP). |
+| **Models (`.model.js`)** | Acessam o banco de dados MySQL usando `mysql2/promise` e o pool configurado em `database.js`. |
+| **Middleware** | Autenticação/autorização (`auth.middleware.js`), validação de JWT e verificação de permissões. |
+| **Scripts de Banco** | `backend/database/setupDatabase.js` cria o schema, as tabelas e popula dados iniciais (produtos). |
+
+---
+
+## 🧩 Modelo de Dados
 
 ### Entidades Principais
 
-- **Cliente (`clientes`)**
-  - Campos principais: `id`, `nome`, `email`, `telefone`, `endereco`, `created_at`, `updated_at`.  
-  - Operações completas de CRUD via API.  
+| Entidade          | Campos principais (conceitual) |
+| :---------------- | :----------------------------- |
+| **Cliente**       | `id`, `nome`, `email`, `senha_hash`, `cargo` (`padrao` / `administrador`), campos auxiliares para reset de senha (token/expiração). |
+| **Produto**       | `id`, `nome`, `descricao`, `preco`, `estoque`, `categoria` (se houver), timestamps. |
+| **Compra**        | `id`, `id_cliente`, `status`, `total`, `data_criacao`, `data_atualizacao`. |
+| **compra_produtos** | `id`, `id_compra`, `id_produto`, `quantidade`, `preco_unitario_no_momento`. |
 
-- **Produto (`produtos`)**
-  - Campos principais: `id`, `nome`, `descricao`, `preco`, `estoque`, `created_at`, `updated_at`.  
-  - CRUD completo para gerenciamento do catálogo de produtos.  
+### Relações
 
-- **Compra (`compras`)**
-  - Campos principais: `id`, `cliente_id`, `data`, `status`, `valor_total`, `created_at`, `updated_at`.  
-  - Relacionada a um cliente e a vários itens de compra.  
-
-- **Compra_Produtos (`compra_produtos`)**
-  - Tabela de associação entre `compras` e `produtos`.  
-  - Campos principais: `id`, `compra_id`, `produto_id`, `quantidade`, `preco_unitario`, `subtotal`.  
+- Um **Cliente** possui muitas **Compras**.  
+- Uma **Compra** possui muitos **Produtos** via tabela `compra_produtos`.  
+- Um **Produto** pode estar em muitas **Compras**.  
 
 ---
 
-### Funcionalidades Principais
+## ⚙️ Lógicas Implementadas
 
-- **CRUD de Clientes**
-  - Criar, listar, buscar por ID, atualizar e deletar clientes em `/api/clientes`.  
-  - Validação básica de campos obrigatórios no controller (`cliente.controller.js`).  
+### 🔐 Autenticação e Autorização
 
-- **CRUD de Produtos**
-  - Endpoints para criação, listagem, busca, atualização e remoção de produtos em `/api/produtos`.  
-  - Controle de campos como `preco` e `estoque` nas operações de criação/atualização.  
+- Registro de novos clientes com criptografia de senha (`bcryptjs`).  
+- Login via e-mail e senha, retornando um **Token JWT** para autenticação.  
+- Middleware de autenticação que protege rotas que exigem login (`verifyToken`).  
 
-- **CRUD de Compras**
-  - Rotas em `/api/compras` para:
-    - Criar uma compra vinculada a um cliente.  
-    - Listar todas as compras.  
-    - Obter uma compra específica (com seus itens).  
-    - Atualizar status e informações da compra.  
-    - Deletar uma compra (e seus itens associados).  
+### 🧩 Controle de Acesso (Níveis de Usuário)
 
-- **Itens da Compra (`compra_produtos`)**
-  - Rotas em `/api/compra-produtos` para:
-    - Adicionar produtos a uma compra existente.  
-    - Listar itens de compra.  
-    - Atualizar quantidade e valores de itens.  
-    - Remover itens de uma compra.  
+- Diferenciação de usuários `padrao` e `administrador`.  
+- Rotas críticas (como deletar cliente) protegidas por middleware de autorização (`isAdmin` / `onlyAdmin`).  
 
-- **Transações SQL (ACID) nas Compras**
-  - Criação de compra e seus itens é feita de forma consistente:
-    - Começa uma transação (`BEGIN`).  
-    - Insere o registro da compra.  
-    - Insere todos os itens em `compra_produtos`.  
-    - Atualiza o `valor_total` da compra.  
-    - Em caso de erro em qualquer etapa, executa `ROLLBACK`, evitando dados inconsistentes.  
-    - Em sucesso, executa `COMMIT`.  
+### ✉️ Recuperação de Senha
 
-- **Autenticação (Estrutura preparada)**
-  - Middleware `auth.middleware.js` preparado para validação de token JWT e autorização de rotas.  
-  - Estrutura pensada para, futuramente, proteger rotas sensíveis com base em usuários e níveis de acesso.  
+Fluxo completo de [translate:"esqueci minha senha"]:
+
+1. Usuário chama `POST /forgot-password` informando o e-mail.  
+2. O sistema gera um token seguro (`crypto`), salva no banco com tempo de expiração.  
+3. Um e-mail de recuperação é enviado com um link contendo o token (`nodemailer`).  
+4. O usuário chama `POST /reset-password` com o token e a nova senha.  
+
+### 📦 CRUDs Completos
+
+- **Clientes:** CRUD completo (com `DELETE` restrito a administradores).  
+- **Produtos:** CRUD completo para gerenciamento do catálogo.  
+- **Compras:** CRUD completo para gerenciar pedidos.  
+
+### 💾 Lógica de Transação (ACID)
+
+Para garantir integridade dos dados:
+
+- Ao **criar uma compra**:
+  - Cria a compra principal.
+  - Insere os itens na tabela `compra_produtos`.
+  - Em caso de erro em qualquer etapa, executa `ROLLBACK`, evitando registros inconsistentes.  
+
+- Ao **deletar uma compra**:
+  - Primeiro remove os itens em `compra_produtos`.
+  - Depois remove o registro principal da compra.  
 
 ---
 
 ## 🛠️ Tecnologias e Justificativas
 
 | Biblioteca / Ferramenta | Justificativa |
-| :--- | :--- |
-| **Node.js** | Ambiente de execução JavaScript no backend, ideal para construir APIs leves e escaláveis. |
-| **Express** | Framework web minimalista para criação de servidores HTTP, definição de rotas (`*.routes.js`) e middlewares. |
-| **MySQL** | Banco de dados relacional para armazenar clientes, produtos, compras e itens de compras com integridade referencial. |
-| **mysql2** | Driver moderno para MySQL com suporte a Promises, usado em `database.js` e nos models. |
-| **dotenv** | Carrega variáveis de ambiente do arquivo `.env` para `process.env`, evitando expor credenciais no código. |
-| **Jest** | Framework de testes utilizado para testar endpoints e regras de negócio da API. |
-| **Supertest** | Biblioteca usada junto com o Jest para fazer requisições HTTP à API durante os testes automatizados. |
-| **Docker** | Facilita a criação de ambientes padronizados, com containers para a API e para o banco de dados MySQL. |
+| :---------------------- | :----------- |
+| **Node.js** | Ambiente de execução JavaScript no backend, ideal para APIs REST. |
+| **Express** | Framework minimalista para criação de servidor HTTP, rotas e middlewares. |
+| **MySQL** | Banco de dados relacional utilizado para persistência de dados do e-commerce. |
+| **mysql2** | Driver otimizado para MySQL com suporte a Promises e transações. |
+| **Docker & Docker Compose** | Padronizam o ambiente (API + banco), facilitando setup, testes e deploy. |
+| **jsonwebtoken (JWT)** | Implementa autenticação baseada em token para rotas protegidas. |
+| **bcryptjs** | Realiza hash seguro de senhas antes de salvá-las no banco. |
+| **dotenv** | Gerencia variáveis de ambiente de forma segura. |
+| **nodemailer** | Envio de e-mails transacionais no fluxo de recuperação de senha. |
+| **crypto** | Geração de tokens aleatórios e seguros para reset de senha. |
+| **Jest + Supertest** | Testes automatizados de endpoints e regras de negócio. |
 
 ---
 
-## 📂 Estrutura de Pastas (Resumo)
+## 🧪 Testes Automatizados
 
-Projeto-e-Commerce/
-├─ index.js # Entrada principal da API (Express)
-├─ package.json # Dependências e scripts
-├─ docker-compose.yml # Orquestração de containers (API + MySQL)
-├─ .env # Variáveis de ambiente (não versionar)
-├─ backend/
-│ ├─ database/
-│ │ ├─ database.js # Configuração do pool MySQL
-│ │ └─ setupDatabase.js # Script para criação e popular o banco
-│ ├─ models/
-│ │ ├─ cliente.model.js
-│ │ ├─ produto.model.js
-│ │ ├─ compra.model.js
-│ │ └─ compra_produtos.model.js
-│ ├─ controllers/
-│ │ ├─ cliente.controller.js
-│ │ ├─ produtos.controller.js
-│ │ ├─ compra.controller.js
-│ │ └─ compra_produtos.controller.js
-│ ├─ routes/
-│ │ ├─ cliente.routes.js
-│ │ ├─ produtos.routes.js
-│ │ ├─ compra.routes.js
-│ │ └─ compra_produtos.routes.js
-│ └─ middlewares/
-│ └─ auth.middleware.js
-└─ tests/
-├─ cliente.test.js
-├─ produtos.test.js
-└─ compra.test.js
+A aplicação conta com testes automatizados para garantir o comportamento esperado:
 
+| Arquivo de Teste      | Cenários testados |
+| :-------------------- | :---------------- |
+| `cliente.test.js`     | Registro, login, retorno do usuário autenticado, acesso a rotas protegidas. |
+| `produtos.test.js`    | CRUD de produtos (criar, listar, atualizar, deletar, erros). |
+| `compra.test.js`      | Criação de compra com itens, consulta do pedido, atualização de status. |
+
+Os testes utilizam o app Express diretamente (sem subir servidor HTTP) por meio de Jest + Supertest.
 
 ---
 
-## ⚙️ Variáveis de Ambiente (.env)
+## 🧱 Estrutura de Pastas (Simplificada)
 
-Crie um arquivo `.env` na raiz do projeto com conteúdo semelhante:
+.
+├── index.js # Ponto de entrada da aplicação Express
 
-Configs do Banco
-DB_HOST=localhost # ou 'db' quando usar Docker
-DB_USER=daniel
-DB_PASS=daniel1
-DB_NAME=eCommerce
-DB_PORT=3306
+├── backend
 
-(Opcional) Senha root caso use Docker
-DB_PASS_ROOT=daniel
+│ ├── routes # Definição dos endpoints (clientes, produtos, compras, itens)
 
-Chave Secreta do JWT (para futura autenticação)
-JWT_SECRET=sua-chave-super-secreta-aqui
+│ ├── controller # Regras de negócio da API
 
+│ ├── model # Acesso ao banco (MySQL)
 
-> Importante: **nunca** commitar o `.env` no repositório.  
-> O projeto já possui `.gitignore` incluindo arquivos sensíveis.
+│ ├── middleware # auth.middleware.js (JWT, controle de acesso)
+
+│ └── database
+
+│ └── setupDatabase.js # Script para criar/popular o banco
+
+├── database.js # Configuração do pool MySQL (mysql2/promise)
+
+├── docker-compose.yml # Orquestração de containers (API + MySQL)
+
+├── package.json # Dependências e scripts (start, test, etc.)
+
+└── .env # Configurações sensíveis (banco, JWT, e-mail)
+
 
 ---
 
@@ -161,54 +168,89 @@ JWT_SECRET=sua-chave-super-secreta-aqui
 
 Você pode rodar o projeto de duas formas:
 
-- **A. Com Docker** (ambiente padronizado – recomendado).  
-- **B. Localmente (sem Docker)**, usando o MySQL instalado na sua máquina.
+- **A. Com Docker (recomendado)** 🐳  
+- **B. Localmente, sem Docker** 💻  
 
 ---
 
 ### ✅ Pré-requisitos
 
-- Node.js (versão 16 ou superior).  
-- MySQL instalado ou Docker + Docker Compose.  
-- Um cliente HTTP (Insomnia, Postman, etc.).  
-- Opcional: MySQL Workbench para visualizar o banco.  
+- Node.js (v16 ou superior)  
+- Docker e Docker Compose  
+- Cliente de API (Insomnia, Postman, etc.)  
+- Cliente de banco (MySQL Workbench, opcional)  
 
 ---
 
-## 🐳 A. Execução com Docker (Recomendado)
+## A. Execução com Docker (Recomendado) 🐳
 
-Este modo sobe dois containers:
+Este método cria dois containers: **API Node.js** e **MySQL**.
 
-- `api`: container com Node.js e a API.  
-- `db`: container com MySQL.  
+### 1. Clone o repositório
 
-### 1. Clonar o repositório
-
-git clone https://github.com/danielreissss/PROJETO-E-COMMERCE
-cd seu-repositorio
+git clone https://github.com/danielreissss/PROJETO-E-COMMERCE.git
+cd PROJETO-E-COMMERCE
 
 
-### 2. Criar o arquivo `.env`
+### 2. Crie o arquivo `.env`
 
 Na raiz do projeto:
 
 Configs do Banco (para o Docker Compose)
+
 DB_HOST=db
+
 DB_USER=daniel
+
 DB_PASS=daniel1
+
 DB_NAME=eCommerce
+
 DB_PORT=3306
+
 DB_PASS_ROOT=daniel
 
-Chave Secreta do JWT
-JWT_SECRET=sua-chave-super-secreta-aqui
+Chave Secreta do JWT:
+
+JWT_SECRET=petronio-labubu-jwt-123!@
+
+Configs do Nodemailer (Mailtrap, SendGrid, etc.):
+
+EMAIL_HOST=smtp.example.com
+
+EMAIL_PORT=587
+
+EMAIL_SECURE=false
+
+EMAIL_USER=seu-email@example.com
+
+EMAIL_PASS=sua-senha-de-app
 
 
-> Note que o `DB_HOST` é `db`, o nome do serviço definido em `docker-compose.yml`.
+> 💡 **Importante:**  
+> O `DB_HOST` deve ser `db`, que é o nome do serviço do banco definido no `docker-compose.yml`.
 
-### 3. Verificar o `docker-compose.yml`
+### 3. Dockerfile
 
-O arquivo já está pronto, semelhante a isto:
+Crie um arquivo `Dockerfile` na raiz (se ainda não existir):
+
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["node", "index.js"]
+
+
+### 4. Arquivo `docker-compose.yml`
 
 version: '3.8'
 
@@ -242,169 +284,161 @@ volumes:
 mysql-data:
 
 
-### 4. Subir os containers
+### 5. Suba os containers
 
 docker-compose up --build
 
-use -d para rodar em segundo plano:
+ou em segundo plano:
 docker-compose up --build -d
 
 
-### 5. Executar o setup do banco (primeira vez)
+### 6. Execute o setup do banco (primeira vez)
 
-Com os containers rodando:
+docker-compose exec api node backend/database/setupDatabase.js
 
-Isso criará o banco, tabelas e inserirá dados iniciais (como produtos de exemplo).  
 
-### 6. Acessar a API
+Pronto! 🎉  
 
-- API disponível em: `http://localhost:3000`.  
-- Banco MySQL acessível em: `localhost:3307` (via MySQL Workbench).
+- API: `http://localhost:3000`  
+- Banco para Workbench: `localhost:3307`  
 
 ---
 
-## 💻 B. Execução Local (Sem Docker)
+## B. Execução Local (Sem Docker) 💻
 
-### 1. Clonar o repositório
+### 1. Clone o repositório
 
-git clone https://github.com/danielreissss/PROJETO-E-COMMERCE
-cd seu-repositorio
+git clone https://github.com/danielreissss/PROJETO-E-COMMERCE.git
+cd PROJETO-E-COMMERCE
 
-
-### 2. Instalar dependências
-
+### 2. Instale as dependências
 npm install
 
 
-### 3. Configurar o MySQL
+### 3. Configure o banco de dados
 
-- Inicie seu servidor MySQL local (MariaDB/MySQL).  
-- Crie um banco chamado `eCommerce` ou deixe que o script `setupDatabase.js` cuide disso.  
-- Garanta que usuário, senha e porta batem com o `.env`.
+- Inicie o servidor MySQL local.  
+- Crie o database se necessário (ex.: `eCommerce`).  
+- Garanta que usuário, senha e porta batem com o `.env`.  
 
-### 4. Criar o arquivo `.env` para ambiente local
+### 4. Crie o arquivo `.env`
 
-Configs do Banco (Local)
+Configs do Banco (Local):
+
 DB_HOST=localhost
+
 DB_USER=daniel
+
 DB_PASS=daniel1
+
 DB_NAME=eCommerce
-DB_PORT=3306
 
-Chave Secreta do JWT
-JWT_SECRET=sua-chave-super-secreta-aqui
+DB_PORT=3307
+
+DB_PASS_ROOT=daniel
+
+Chave Secreta do JWT:
+
+JWT_SECRET=petronio-labubu-jwt-123!@
+
+Configs do Nodemailer:
+
+EMAIL_HOST=smtp.example.com
+
+EMAIL_PORT=587
+
+EMAIL_SECURE=false
+
+EMAIL_USER=seu-email@example.com
+
+EMAIL_PASS=sua-senha-de-app
 
 
-### 5. Rodar o setup do banco
+### 5. Execute o setup do banco
 
 node backend/database/setupDatabase.js
 
 
-### 6. Iniciar o servidor
+### 6. Inicie o servidor
 
 npm start
 
 ou
-
 node index.js
 
 
-A API estará disponível em: `http://localhost:3000`.  
+A API ficará disponível em: `http://localhost:3000` 🚀
 
 ---
 
-## 🧪 Testes Automatizados
+## 🗺️ Estrutura de Endpoints (API)
 
-Os testes usam **Jest** + **Supertest** para validar os endpoints.  
+### 🔑 Autenticação (`/api/clientes`)
 
-### Scripts no `package.json`
-
-"scripts": {
-"start": "node index.js",
-"test": "cross-env NODE_ENV=test jest --runInBand"
-}
-
-
-### Rodar os testes
-
-
-npm test
-
-
-Os testes cobrem, por exemplo:
-
-- `tests/cliente.test.js` – CRUD de clientes.  
-- `tests/produtos.test.js` – CRUD de produtos.  
-- `tests/compra.test.js` – criação, listagem e manipulação de compras.  
-
-> Em ambiente de teste, o `index.js` não sobe o servidor (usa apenas o `app` exportado) para que o Jest possa encerrar corretamente.
+| Método | Rota              | Descrição |
+| :----- | :---------------- | :-------- |
+| `POST` | `/register`       | Registra um novo cliente. |
+| `POST` | `/login`          | Realiza login e retorna um token JWT. |
+| `POST` | `/forgot-password`| Inicia o processo de recuperação de senha (envia e-mail). |
+| `POST` | `/reset-password` | Conclui o processo de reset de senha, usando o token enviado por e-mail. |
 
 ---
 
-## 🗺️ Endpoints da API
+### 👤 Clientes (`/api/clientes`) – rotas protegidas por token
 
-### Clientes – `/api/clientes`
-
-- `GET /api/clientes` – Lista todos os clientes.  
-- `GET /api/clientes/:id` – Busca um cliente por ID.  
-- `POST /api/clientes` – Cria um novo cliente.  
-- `PUT /api/clientes/:id` – Atualiza um cliente existente.  
-- `DELETE /api/clientes/:id` – Remove um cliente.  
-
-### Produtos – `/api/produtos`
-
-- `GET /api/produtos` – Lista todos os produtos.  
-- `GET /api/produtos/:id` – Busca um produto por ID.  
-- `POST /api/produtos` – Cria um novo produto.  
-- `PUT /api/produtos/:id` – Atualiza um produto existente.  
-- `DELETE /api/produtos/:id` – Remove um produto.  
-
-### Compras – `/api/compras`
-
-- `GET /api/compras` – Lista todas as compras.  
-- `GET /api/compras/:id` – Busca uma compra específica (incluindo itens).  
-- `POST /api/compras` – Cria uma nova compra (cliente + itens).  
-- `PUT /api/compras/:id` – Atualiza dados da compra (ex.: status).  
-- `DELETE /api/compras/:id` – Deleta a compra e seus itens relacionados.  
-
-### Itens da Compra – `/api/compra-produtos`
-
-- `GET /api/compra-produtos` – Lista todos os itens de todas as compras (ou filtrado por query).  
-- `GET /api/compra-produtos/:id` – Busca um item específico.  
-- `POST /api/compra-produtos` – Adiciona um produto a uma compra.  
-- `PUT /api/compra-produtos/:id` – Atualiza um item de compra (ex.: quantidade).  
-- `DELETE /api/compra-produtos/:id` – Remove um item de compra.  
+| Método   | Rota   | Descrição |
+| :------- | :----- | :-------- |
+| `GET`    | `/`    | Lista todos os clientes (sem dados sensíveis). |
+| `GET`    | `/:id` | Busca um cliente específico. |
+| `PUT`    | `/:id` | Atualiza um cliente. |
+| `DELETE` | `/:id` | Deleta um cliente (**apenas administradores**). |
 
 ---
 
-## 🔐 Middleware de Autenticação (Estrutura)
+### 📦 Produtos (`/api/produtos`)
 
-O arquivo `backend/middlewares/auth.middleware.js` contém a estrutura para:
-
-- Validar tokens JWT enviados no header `Authorization`.  
-- Rejeitar requisições sem token ou com token inválido.  
-- Permitir, futuramente, diferenciar níveis de usuários (como `admin` / `user`) para proteger rotas críticas.  
-
-> No estado atual do projeto, o JWT ainda não está totalmente integrado a todas as rotas, mas o esqueleto está pronto para evolução.
-
----
-
-## 🧾 Boas Práticas Adotadas
-
-- Separação clara em camadas: `routes`, `controllers`, `models`, `database`.  
-- Uso de `dotenv` para credenciais e configurações.  
-- Pool de conexões MySQL com `mysql2/promise`.  
-- Scripts de setup de banco automatizados (`setupDatabase.js`).  
-- Testes automatizados com Jest + Supertest para endpoints principais.  
+| Método   | Rota   | Descrição |
+| :------- | :----- | :-------- |
+| `GET`    | `/`    | Lista todos os produtos. |
+| `GET`    | `/:id` | Busca um produto específico. |
+| `POST`   | `/`    | Cria um novo produto. |
+| `PUT`    | `/:id` | Atualiza um produto. |
+| `DELETE` | `/:id` | Deleta um produto. |
 
 ---
 
-<p align="center">
-  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript" />
-  &nbsp;
-  <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
-  &nbsp;
-  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
-  &nbsp;
-  <img src="https://img.shields.io/badge/Jest-C21325?style=for-the-badge&logo=jest&logoColor=white" alt="Jest" />
-</p>
+### 🧾 Compras (`/api/compras`)
+
+| Método   | Rota   | Descrição |
+| :------- | :----- | :-------- |
+| `GET`    | `/`    | Lista todas as compras. |
+| `GET`    | `/:id` | Busca uma compra específica (com seus produtos). |
+| `POST`   | `/`    | Cria uma nova compra (com seus produtos). |
+| `PUT`    | `/:id` | Atualiza o status de uma compra. |
+| `DELETE` | `/:id` | Deleta uma compra (e seus produtos associados). |
+
+---
+
+### 🧺 Itens da Compra (`/api/compras/:compraId/items`)
+
+| Método   | Rota           | Descrição |
+| :------- | :------------- | :-------- |
+| `GET`    | `/`            | Lista todos os produtos de uma compra específica. |
+| `POST`   | `/`            | Adiciona um novo produto a uma compra. |
+| `PUT`    | `/:produtoId`  | Atualiza um item (por exemplo, quantidade) em uma compra. |
+| `DELETE` | `/:produtoId`  | Remove um item de uma compra. |
+
+---
+
+## 💡 Dicas de Uso (Insomnia/Postman)
+
+- Sempre enviar o header nas rotas protegidas:  
+  - [translate:Authorization: Bearer <seu_token_jwt>]  
+- Fluxo recomendado para começar a testar:
+  1. `POST /api/clientes/register`  
+  2. `POST /api/clientes/login` (copiar o token)  
+  3. Criar/consultar produtos e compras autenticado.  
+
+---
+
+
