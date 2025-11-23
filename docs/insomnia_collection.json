@@ -1,0 +1,350 @@
+﻿{
+  "type": "collection.insomnia.rest/5.0",
+  "schema_version": "5.1",
+  "name": "PROJETO e-Commerce",
+  "meta": {
+    "id": "wrk_3f1ceb07e3ea4fc192214436d1d8ec56",
+    "created": 1760475986627,
+    "modified": 1763188681660,
+    "description": ""
+  },
+  "collection": [
+    {
+      "name": "Criando Cliente - Usuário Comp",
+      "meta": {
+        "id": "fld_8518960348404f8393af5e00ea0f8fb1",
+        "created": 1762125982286,
+        "modified": 1763939309293,
+        "sortKey": -1762125982286,
+        "description": ""
+      },
+      "children": [
+        {
+          "url": "http://localhost:3000/api/clientes/register",
+          "name": "Cliente Register",
+          "meta": {
+            "id": "req_031cb35dee4f4873a2d18f5d2c1d04b3",
+            "created": 1760475986671,
+            "modified": 1763333176935,
+            "isPrivate": false,
+            "description": "",
+            "sortKey": -1762125989153
+          },
+          "method": "POST",
+          "body": {
+            "mimeType": "application/json",
+            "text": "{\n\t\"nome\" :  \"compjr\",\n  \"email\" : \"compjr@gmail.com\",\n\t\"senha\" : \"comp\",\n  \"cargo\" : \"padrao\"\n}"
+          },
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "insomnia/11.6.1"
+            }
+          ],
+          "settings": {
+            "renderRequestBody": true,
+            "encodeUrl": true,
+            "followRedirects": "global",
+            "cookies": {
+              "send": true,
+              "store": true
+            },
+            "rebuildPath": true
+          }
+        },
+        {
+          "url": "http://localhost:3000/api/clientes/login",
+          "name": "Token login ",
+          "meta": {
+            "id": "req_ddc37f656ac64ed9a46489785f9ab2ea",
+            "created": 1762125937378,
+            "modified": 1763939149164,
+            "isPrivate": false,
+            "description": "",
+            "sortKey": -1762125989253
+          },
+          "method": "POST",
+          "body": {
+            "mimeType": "application/json",
+            "text": "{\n\t\"email\" : \"compjr@gmail.com\",\n\t\"senha\" : \"comp\"\n}"
+          },
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "insomnia/11.6.2"
+            },
+            {
+              "name": "Authorization: Bearer SEU_TOKEN",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NzYsImNhcmdvIjoicGFkcmFvIiwiaWF0IjoxNzYzMzMzMTk3LCJleHAiOjE3NjMzMzY3OTd9.JCtnJc6qUfU9Hhhmm89ftmr4UjsjPziiVMhQSsdDec4",
+              "description": "",
+              "disabled": false
+            }
+          ],
+          "settings": {
+            "renderRequestBody": true,
+            "encodeUrl": true,
+            "followRedirects": "global",
+            "cookies": {
+              "send": true,
+              "store": true
+            },
+            "rebuildPath": true
+          }
+        },
+        {
+          "url": "http://localhost:3000/api/clientes/me",
+          "name": "Verificando o token do login (antigo)",
+          "meta": {
+            "id": "req_96ac8cabf21f4e8982064f8b84814d75",
+            "created": 1762127040885,
+            "modified": 1763332091916,
+            "isPrivate": false,
+            "description": "",
+            "sortKey": -1762125989353
+          },
+          "method": "GET",
+          "headers": [
+            {
+              "name": "User-Agent",
+              "value": "insomnia/11.6.2"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiY2FyZ28iOiJhZG1pbmlzdHJhZG9yIiwiaWF0IjoxNzYyMTI3MDI2LCJleHAiOjE3NjIyMTM0MjZ9.y_KT49YbxntwUSI7mUqQDWnViwKcriZ9JGZlPUJm3OY",
+              "description": "",
+              "disabled": false
+            }
+          ],
+          "settings": {
+            "renderRequestBody": true,
+            "encodeUrl": true,
+            "followRedirects": "global",
+            "cookies": {
+              "send": true,
+              "store": true
+            },
+            "rebuildPath": true
+          }
+        },
+        {
+          "url": "http://localhost:3000/api/clientes/me",
+          "name": "Verificando o token do login",
+          "meta": {
+            "id": "req_25f11f06c03944c38f858950a8d3a294",
+            "created": 1763332045784,
+            "modified": 1763333210278,
+            "isPrivate": false,
+            "description": "",
+            "sortKey": -1762125989303
+          },
+          "method": "GET",
+          "headers": [
+            {
+              "name": "User-Agent",
+              "value": "insomnia/11.6.2"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NzYsImNhcmdvIjoicGFkcmFvIiwiaWF0IjoxNzYzMzMzMTk3LCJleHAiOjE3NjMzMzY3OTd9.JCtnJc6qUfU9Hhhmm89ftmr4UjsjPziiVMhQSsdDec4",
+              "description": "",
+              "disabled": false
+            }
+          ],
+          "settings": {
+            "renderRequestBody": true,
+            "encodeUrl": true,
+            "followRedirects": "global",
+            "cookies": {
+              "send": true,
+              "store": true
+            },
+            "rebuildPath": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "Compra - Usuario Comp",
+      "meta": {
+        "id": "fld_ae453dc6ea6d4c8b9932eac60bbd5949",
+        "created": 1763938748915,
+        "modified": 1763938748915,
+        "sortKey": -1763938748915,
+        "description": ""
+      },
+      "children": [
+        {
+          "url": "http://localhost:3000/api/compras",
+          "name": "Compra de mouse",
+          "meta": {
+            "id": "req_da0d5fc8dcbf476a9f0273e56d19ede9",
+            "created": 1763938981014,
+            "modified": 1763939276319,
+            "isPrivate": false,
+            "description": "",
+            "sortKey": -1763938983171
+          },
+          "method": "POST",
+          "body": {
+            "mimeType": "application/json",
+            "text": "{\n  \"cliente_id\": 76,\n  \"produtos\": [\n    {\n      \"produto_id\": 1,\n      \"quantidade\": 1,\n      \"preco_unitario\": 1999.00\n    }\n  ]\n}\n"
+          },
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "insomnia/12.1.0",
+              "description": "",
+              "disabled": false
+            },
+            {
+              "name": "Authorization: Bearer SEU_TOKEN",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NzYsImNhcmdvIjoicGFkcmFvIiwiaWF0IjoxNzYzOTM5MTc1LCJleHAiOjE3NjM5NDI3NzV9.vbUyFuWCUI3fcST_i1akP3MmFbD_05B5DZ8N6otYUQQ",
+              "description": "",
+              "disabled": false
+            }
+          ],
+          "settings": {
+            "renderRequestBody": true,
+            "encodeUrl": true,
+            "followRedirects": "global",
+            "cookies": {
+              "send": true,
+              "store": true
+            },
+            "rebuildPath": true
+          }
+        },
+        {
+          "url": "http://localhost:3000/api/compras/27",
+          "name": "Leitura da compra",
+          "meta": {
+            "id": "req_e2481f03de014e4699a556f841f9bbbe",
+            "created": 1763939334725,
+            "modified": 1763939419264,
+            "isPrivate": false,
+            "description": "",
+            "sortKey": -1763938983271
+          },
+          "method": "GET",
+          "headers": [
+            {
+              "name": "User-Agent",
+              "value": "insomnia/12.1.0",
+              "description": "",
+              "disabled": false
+            }
+          ],
+          "settings": {
+            "renderRequestBody": true,
+            "encodeUrl": true,
+            "followRedirects": "global",
+            "cookies": {
+              "send": true,
+              "store": true
+            },
+            "rebuildPath": true
+          }
+        },
+        {
+          "url": "http://localhost:3000/api/compra-produtos/27",
+          "name": "Listar itens da compra",
+          "meta": {
+            "id": "req_926f1d02d2274e1088a4e45351c76259",
+            "created": 1763939442944,
+            "modified": 1763939490579,
+            "isPrivate": false,
+            "description": "",
+            "sortKey": -1763938983371
+          },
+          "method": "GET",
+          "headers": [
+            {
+              "name": "User-Agent",
+              "value": "insomnia/12.1.0",
+              "description": "",
+              "disabled": false
+            }
+          ],
+          "settings": {
+            "renderRequestBody": true,
+            "encodeUrl": true,
+            "followRedirects": "global",
+            "cookies": {
+              "send": true,
+              "store": true
+            },
+            "rebuildPath": true
+          }
+        },
+        {
+          "url": "http://localhost:3000/api/compras/27",
+          "name": "Atualizar status da compra",
+          "meta": {
+            "id": "req_ba41518ab8a542bebc021259d25c6e65",
+            "created": 1763939513781,
+            "modified": 1763939550009,
+            "isPrivate": false,
+            "description": "",
+            "sortKey": -1763938983471
+          },
+          "method": "PUT",
+          "body": {
+            "mimeType": "application/json",
+            "text": "{\n  \"status\": \"enviado\"\n}"
+          },
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "insomnia/12.1.0",
+              "description": "",
+              "disabled": false
+            }
+          ],
+          "settings": {
+            "renderRequestBody": true,
+            "encodeUrl": true,
+            "followRedirects": "global",
+            "cookies": {
+              "send": true,
+              "store": true
+            },
+            "rebuildPath": true
+          }
+        }
+      ]
+    }
+  ],
+  "cookieJar": {
+    "name": "Default Jar",
+    "meta": {
+      "id": "jar_d2138a62b9b79fca4d7a5b20964778cb78e247cb",
+      "created": 1760475986629,
+      "modified": 1760475986629
+    }
+  },
+  "environments": {
+    "name": "Base Environment",
+    "meta": {
+      "id": "env_d2138a62b9b79fca4d7a5b20964778cb78e247cb",
+      "created": 1760475986628,
+      "modified": 1760475986628,
+      "isPrivate": false
+    }
+  }
+}
